@@ -1,0 +1,5 @@
+{
+  "name": "orbit-explorer",
+  "private": true,
+  "workspaces": ["apps/*"]
+}
