@@ -1,8 +1,8 @@
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import Stats from "three/examples/jsm/libs/stats.module";
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import Stats from 'three/examples/jsm/libs/stats.module';
 
-class SceneInit {
+export default class SceneInit {
     constructor(fov = 36, camera, scene, stats, controls, renderer) {
         this.fov = fov;
         this.scene = scene;
@@ -10,6 +10,7 @@ class SceneInit {
         this.camera = camera;
         this.controls = controls;
         this.renderer = renderer;
+        this.canvasID = canvasID;
     }
 
     initScene() {
@@ -54,9 +55,24 @@ class SceneInit {
         window.addEventListener('resize', () => this.onWindowsResize(), false);
     }
 
-    
-
+    animate() {
+        window.requestAnimationFrame(this.animate.bind(this));
+        this.render();
+        this.stats.update();
+        this.controls.update();
     }
+
+    render() {
+        this.uniforms.u_time.value += this.clock.getDelta();
+        this.renderer.render(this.scene, this.camera);
+    }
+
+    onWindowResize() {
+        this.camera.aspect = windows.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+}
 
 
 
