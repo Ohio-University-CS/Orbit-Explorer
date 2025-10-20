@@ -14,15 +14,49 @@ class SceneInit {
 
     initScene() {
         this.camera = new THREE.PerspectiveCamera(this.fov, window.innerWidth / window.innerHeight, 1, 1000);
-        
+        this.camera.position.z = 196;
+
+        this.clock = new THREE.Clock();
         this.scene = new THREE.Scene();
 
-        this.renderer = new THREE.WebGLRenderer({canvas: document.getElementById("myThreeJSCanvas"), antialias: true,
-    });
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+        const spaceTexture = new THREE.TextureLoader().load("galaxy.jpg");
+        this.scene.background = spaceTexture;
+
+        this.uniforms = {
+            u_time: { type: 'f', value: 1.0}, 
+            colorB: { type: 'vec3', value: new THREE.Color(0xfff000) },
+            colorA: { type: 'vec3', value: new THREE.Color(0xffffff) },
+        };
+
+        const canvas = document.getElementById(this.canvasID);
+        this.renderer = new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+        });
+
+        this.renderer.setSize(windows.innerWidth, window.innerHeight);
+        document.body.appendChild(this.renderer.domElement);
+
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+
+        this.stats = Stats();
+        document.body.appendChild(this.stats.dom);
+
+        let ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        ambientLight.castShadow = true;
+        this.scene.add(ambientLight);
+
+        let spotLight = new THREE.SpotLight(0xffffff, 1);
+        spotLight.castShadow = true;
+        spotLight.position.set(0, 64, 32);
+        this.scene.add(spotLight);
+
+        window.addEventListener('resize', () => this.onWindowsResize(), false);
+    }
+
+    
+
     }
 
 
 
-}
