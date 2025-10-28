@@ -12,9 +12,9 @@ def read_root():
     return {"message": "Hello World"}
 
 @app.get("/event/search")
-async def event_search(start_time: int, end_time: int, lon: float, lat: float, elevation: float) -> List[EventItem]:
+async def event_search(start_time: int, end_time: int, lon: float, lat: float, elevation: float, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
     geodetic_loc = GeodeticLocation(lon = lon, lat = lat, elevation = elevation)
-    events = get_events(geodetic_loc, start_time, end_time)
+    events = get_events(geodetic_loc, start_time, end_time, whitelisted_event_types, event_specific_criteria)
     return events
 
 @app.get("/bodies/{name}")
@@ -23,3 +23,14 @@ def read_body(name: str):
     if not info:
         raise HTTPException(status_code=404, detail="Celestial body not found")
     return info
+
+@app.get("/user/locations")
+def read_user_locations():
+    locs = get_saved_locations()
+    return locs
+
+def get_saved_locations():
+    return {
+        GeodeticLocation(-82, 39, 100),
+        GeodeticLocation(-82, 39.2, 200),
+    }
