@@ -23,3 +23,14 @@ def read_body(name: str):
     if not info:
         raise HTTPException(status_code=404, detail="Celestial body not found")
     return info
+
+@app.get("/user/locations")
+def read_user_locations():
+    locs = get_saved_locations()
+    return locs
+
+def get_saved_locations():
+    return {
+        GeodeticLocation(-82, 39, 100),
+        GeodeticLocation(-82, 39.2, 200),
+    }
