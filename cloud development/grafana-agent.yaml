@@ -1,0 +1,17 @@
+metrics:
+  global:
+    scrape_interval: 15s
+  configs:
+    - name: default
+      scrape_configs:
+        - job_name: 'node_app'
+          metrics_path: /metrics
+          static_configs:
+            - targets:
+              - localhost:4000
+
+remote_write:
+  - url: YOUR_GRAFANA_REMOTE_WRITE_URL
+    basic_auth:
+      username: YOUR_GRAFANA_USERNAME
+      password: YOUR_GRAFANA_API_KEY
