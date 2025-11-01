@@ -1,7 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Main from "./components/Main";
 
+// Keep your same button styling
 const Button = styled.button`
   background-color: #FF964F;
   color: white;
@@ -21,18 +23,17 @@ const Button = styled.button`
   }
 `;
 
-function clickMe(){
-  alert('You clicked me!');
-}
+// Component for your loading screen
+function LoadingScreen() {
+  const navigate = useNavigate();
 
-export default function App() {
   return (
-    <div style = {{ position: "relative", height: "100vh", width: "100%"}}>
-        {/* Fullscreen */}
-        <Main />
+    <div style={{ position: "relative", height: "100vh", width: "100%" }}>
+      {/* Fullscreen video or background */}
+      <Main />
 
-        {/*Button container */}
-        <div 
+      {/* Button container */}
+      <div
         style={{
           position: "absolute",
           inset: 0,
@@ -42,11 +43,40 @@ export default function App() {
           alignItems: "center",
           gap: "20px"
         }}
-        >
+      >
+        {/* Original buttons */}
+        <Button onClick={() => alert('You clicked login!')}>LOGIN</Button>
+        <Button onClick={() => alert('You clicked signup!')}>SIGN UP</Button>
 
-          <Button onClick={clickMe}>LOGIN</Button>
-          <Button onClick={clickMe}>SIGN UP</Button>
-    </div>
+        {/* 🌌 New button that opens your 3D scene */}
+        <Button onClick={() => navigate("/cosmic")}>EXPLORE</Button>
+      </div>
     </div>
   );
 }
+
+// Frame that loads your Three.js build (iframe version)
+function CosmicFrame() {
+  return (
+    <div style={{ height: "100vh", width: "100vw", margin: 0, padding: 0 }}>
+      <iframe
+        title="Cosmic"
+        src="/cosmic/index.html"
+        style={{ border: "none", width: "100%", height: "100%" }}
+      />
+    </div>
+  );
+}
+
+// Main app with routes
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LoadingScreen />} />
+        <Route path="/cosmic" element={<CosmicFrame />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
