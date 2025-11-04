@@ -74,4 +74,5 @@ eclipsedatas = [] #array to store the eclipses found in format mm dd yyyy hh:mmm
 for i in range(len(eclipsetimes)):
     eclipsedatas.append(eclipsetimes[i].utc_strftime('%m %d %Y %H:%M') + " " + eclipselib.LUNAR_ECLIPSES[i])
 #print("Lunar eclipses between", begin.strftime("%B %d %Y"), "and", end.strftime("%B %d %Y"), ":")
-#print(eclipsedatas)
+print(eclipsedatas[0])
+print(eclipsedatas[1])

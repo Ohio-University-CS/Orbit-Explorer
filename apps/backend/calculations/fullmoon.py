@@ -55,3 +55,4 @@ indexoffullmoon = list(templist).index(2)
 dateofnextfullmoon = moonphasetimes[indexoffullmoon].utc_strftime('%m %d %Y') #format is mm dd yyyy
 
 #print("The next full moon is", dateofnextfullmoon)
+print(dateofnextfullmoon)
