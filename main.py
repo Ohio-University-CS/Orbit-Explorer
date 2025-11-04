@@ -25,3 +25,9 @@ def connect():
             print('Database connection termminated.')
 if __name__ == "__main__":
     connect()
+
+
+#Reactivation steps when a new terminal is opened:
+#cd ~/Desktop/orbitExplorer
+#source .venv/bin/activate
+#python main.py
