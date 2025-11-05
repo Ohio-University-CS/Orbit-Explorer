@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import React from 'react';
 import styled from 'styled-components';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
@@ -80,3 +81,20 @@ export default function App() {
   );
 }
 
+=======
+import React from "react";
+
+function clickMe() {
+  alert('You clicked me!');
+}
+ 
+export default function App() {
+  return (
+    <div>
+      <button onClick={clickMe}>
+        Button
+      </button>
+    </div>
+  );
+}
+>>>>>>> Stashed changes
