@@ -1,8 +1,9 @@
 fastapi
 uvicorn[standard]
 pydantic
-typing
-datetime
 skyfield
 python-multipart
 httpx
+psycopg2-binary
+passlib[argon2]
+argon2-cffi
