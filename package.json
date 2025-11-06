@@ -2,7 +2,8 @@
   "name": "orbit-explorer",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "apps/*",
+    "frontendeng/frontend"
   ],
   "dependencies": {
     "@react-three/drei": "^10.7.6",
