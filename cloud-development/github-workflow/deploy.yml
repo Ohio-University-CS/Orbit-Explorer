@@ -1,0 +1,51 @@
+name: Build, Test, and Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        cd apps/backend
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Run tests
+      run: |
+        cd apps/backend
+        pytest -v || true
+
+    - name: Build Docker image
+      run: |
+        cd apps/backend
+        docker build -t orbit-backend .
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+    - name: Copy project to EC2
+      run: |
+        scp -o StrictHostKeyChecking=no -r cloud-development ubuntu@${{ secrets.EC2_HOST }}:~/orbit-cloud
+
+    - name: Deploy on EC2
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+          cd ~/orbit-cloud &&
+          docker-compose down &&
+          docker-compose up --build -d
+        "

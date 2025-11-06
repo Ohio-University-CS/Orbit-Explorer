@@ -2,15 +2,15 @@ version: "3.8"
 
 services:
   api:
-    build: ../backend
+    build: /home/yeahlonte/Orbit-Explorer/apps/backend
     container_name: orbit_api
     restart: always
     ports:
-      - "4000:4000"
+      - "8000:8000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
-      PORT: 4000
+      PORT: 8000
     depends_on:
       - db
       - redis

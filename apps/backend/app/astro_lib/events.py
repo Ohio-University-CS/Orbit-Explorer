@@ -5,9 +5,15 @@ from pydantic import BaseModel, Field
 from enum import Enum
 from skyfield.api import load
 
-class SearchParam(Enum):
-    
-search_params = []
+
+class EventCriteria(BaseModel):
+    """Describes criteria for astronomical events."""
+    name: str
+    description: str
+
+class SearchParam(Enum):    
+    search_params = []
+
 class EventType:
     def __init__(self, name, subtypes = None, search_params = None):
         self.name = name
@@ -88,9 +94,13 @@ def gen_events():
 
 class EventType(BaseModel):
     name: str
-    subtypes: List[EventType]
-    criteria: List[EventCriteria]
+    subtypes: List["EventType"] = []  # use a string type for self-reference
+    criteria: List["EventCriteria"] = []
     description: str
+
+    class Config:
+        arbitrary_types_allowed = True  # ignore unknown nested types
+
 
 class EventItem(BaseModel):
     id: str
@@ -142,3 +152,5 @@ def get_events(location: GeodeticLocation, start_time: int, end_time: int, white
     )
 
     return [dummy_event]
+
+    EventType.model_rebuild()
