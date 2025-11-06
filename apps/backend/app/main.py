@@ -7,12 +7,8 @@ from app.astro_lib.events import *
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"message": "Hello World"}
-
 @app.get("/event/search")
-async def event_search(start_time: int, end_time: int, lon: float, lat: float, elevation: float, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
+def event_search(start_time: int, end_time: int, lon: float, lat: float, elevation: float, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
     geodetic_loc = GeodeticLocation(lon = lon, lat = lat, elevation = elevation)
     events = get_events(geodetic_loc, start_time, end_time, whitelisted_event_types, event_specific_criteria)
     return events
@@ -38,14 +34,23 @@ def read_user_saved_events():
 
 @app.post("/user/locations/add")
 def post_user_saved_location(lon: float, lat: float, elevation: float, name: str):
-    save_user_location(GeodeticLocation(lon, lat, elevation), name)
+    save_user_location(GeodeticLocation(lon=lon, lat=lat, elevation=elevation), name)
 
 @app.post("/user/preferences/update")
 def post_update_user_preferences(options: List):
     update_user_preferences(options)
 
 def get_user_saved_locations():
-    return {
-        GeodeticLocation(-82, 39, 100),
-        GeodeticLocation(-82, 39.2, 200),
-    }
+    return [
+        GeodeticLocation(lon=-82, lat=39, elevation=100),
+        GeodeticLocation(lon=-82, lat=39.2, elevation=200),
+    ]
+
+def save_user_location(loc: GeodeticLocation, name: str):
+    pass
+
+def get_user_preferences():
+    return []
+
+def get_user_saved_events():
+    return []
