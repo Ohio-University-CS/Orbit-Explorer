@@ -7,6 +7,27 @@ from datetime import date, timedelta
 import numpy
 eph = load('de421.bsp')
 
+def checkLunarValidDate(month, day, year):
+    if day < 1:
+        return False
+    if month < 1 or month > 12 :
+        return False
+    if month == 1 or month == 3 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12:
+        if day > 31 :
+            return False
+    if month == 2:
+        if year % 4 == 0: # if it is a leap year
+            if day > 29 :
+                return False
+        else : 
+            if day > 28:
+                return False
+            return False
+    if month == 4 or month == 6 or month == 9 or month == 11:
+        if day > 30:
+            return False
+    return True
+
 timescale = load.timescale()
 numarg = len(sys.argv) #number of command line arguments
 #checks for the right number of arguments, exits if not. will upate to default to starting with today's date
@@ -28,6 +49,9 @@ if numarg == 4:
     beginday = int(sys.argv[2])
     beginyear = int(sys.argv[3])
     begin = datetime.datetime(beginyear, beginmonth, beginday)
+    if not checkLunarValidDate(beginmonth, beginday, beginyear) :
+        print("Error: invalid date")
+        sys.exit(0)
 
 timescaleTime = timescale.utc(beginyear, beginmonth, beginday)
 
