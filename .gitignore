@@ -7,3 +7,7 @@ dist
 dist-ssr
 *.local
 .next
+
+# Vendored threejs source ignores
+/tools/cosmic-src/node_modules/
+/tools/cosmic-src/dist/

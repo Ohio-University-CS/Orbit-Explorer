@@ -1,0 +1,107 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Snapshots for /, after navigate, and direct /cosmic > after-explore 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="cosmic"
+  >
+    Cosmic Frame
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Snapshots for /, after navigate, and direct /cosmic > cosmic-direct 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="cosmic"
+  >
+    Cosmic Frame
+  </div>
+</DocumentFragment>
+`;
+
+exports[`Snapshots for /, after navigate, and direct /cosmic > home-root 1`] = `
+<DocumentFragment>
+  <div
+    style="position: relative; height: 100vh; width: 100%;"
+  >
+    <div
+      data-testid="main"
+    >
+      Main Scene
+    </div>
+    <div
+      style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;"
+    >
+      <button
+        class="sc-aXZVg ePCbsR"
+      >
+        LOGIN
+      </button>
+      <button
+        class="sc-aXZVg ePCbsR"
+      >
+        SIGN UP
+      </button>
+      <button
+        class="sc-aXZVg ePCbsR"
+      >
+        EXPLORE
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`snapshot of /, after navigate, and /cosmic > after-explore 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="cosmic"
+  >
+    Cosmic Frame
+  </div>
+</DocumentFragment>
+`;
+
+exports[`snapshot of /, after navigate, and /cosmic > cosmic-direct 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="cosmic"
+  >
+    Cosmic Frame
+  </div>
+</DocumentFragment>
+`;
+
+exports[`snapshot of /, after navigate, and /cosmic > home-root 1`] = `
+<DocumentFragment>
+  <div
+    style="position: relative; height: 100vh; width: 100%;"
+  >
+    <div
+      data-testid="main"
+    >
+      Main Scene
+    </div>
+    <div
+      style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px;"
+    >
+      <button
+        class="sc-aXZVg ePCbsR"
+      >
+        LOGIN
+      </button>
+      <button
+        class="sc-aXZVg ePCbsR"
+      >
+        SIGN UP
+      </button>
+      <button
+        class="sc-aXZVg ePCbsR"
+      >
+        EXPLORE
+      </button>
+    </div>
+  </div>
+</DocumentFragment>
+`;
