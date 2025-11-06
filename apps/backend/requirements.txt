@@ -5,3 +5,4 @@ typing
 datetime
 skyfield
 python-multipart
+httpx

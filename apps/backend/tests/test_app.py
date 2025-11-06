@@ -1,7 +1,4 @@
 import unittest
-
-import unittest
-from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from app.main import *
 from app.astro_lib.events import *
