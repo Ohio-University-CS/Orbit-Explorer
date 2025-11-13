@@ -8,6 +8,11 @@ from app.astro_lib.events import *
 
 app = FastAPI()
 
+@app.get("/")
+def home():
+    return {"message": "Hi class, welcome to Orbit Explorer!"}
+
+
 @app.get("/event/search")
 def event_search(start_time: int, end_time: int, lon: float, lat: float, elevation: float, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
     geodetic_loc = GeodeticLocation(lon = lon, lat = lat, elevation = elevation)
