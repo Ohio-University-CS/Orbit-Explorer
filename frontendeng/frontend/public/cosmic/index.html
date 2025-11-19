@@ -5,103 +5,197 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cosmic Events</title>
+
     <script type="module" crossorigin src="/cosmic/assets/index-CY4vSoL8.js"></script>
-    <link rel="stylesheet" crossorigin href="/cosmic/assets/index-COpc0ASg.css">
+    <link rel="stylesheet" crossorigin href="/cosmic/assets/index-COpc0ASg.css" />
   </head>
   <body>
-
-    <canvas id="bg"></canvas>   
+    <canvas id="bg"></canvas>
 
     <main>
-
       <header>
         <h1>Cosmic Events</h1>
         <p>Scroll to Enter Inputs 👇</p>
       </header>
 
-
       <blockquote id="tempBlock">
-  <form id="tempForm">
-    <label for="temperature">Enter your temperature:</label><br><br>
-    <input type="number" id="temperature" name="temperature" placeholder="e.g. 36.6" required>
-    <select id="unit" name="unit">
-      <option value="C">°C</option>
-      <option value="F">°F</option>
-    </select>
-    <button type="submit">Submit</button>
-  </form>
+        <form id="tempForm">
+          <label for="temperature">Enter your temperature:</label><br /><br />
+          <input
+            type="number"
+            id="temperature"
+            name="temperature"
+            placeholder="e.g. 36.6"
+            required
+          />
+          <select id="unit" name="unit">
+            <option value="C">°C</option>
+            <option value="F">°F</option>
+          </select>
+          <button type="submit">Submit</button>
+        </form>
 
-  <p id="tempOutput"></p>
-</blockquote>
-
-
-      <section>
-          <h2>📅 Select a Date</h2>
-
-  <form id="dateForm">
-    <label for="eventDate">Choose a date:</label><br>
-    <input type="date" id="eventDate" name="eventDate" required><br><br>
-
-    <button type="submit">Submit</button>
-  </form>
-
-  <p id="dateOutput"></p>
-
-      </section>
-
-<section class="light">
-  <h2>🕒 Your Local Time</h2>
-  <div id="timeBlock">
-    <div id="localTime" class="giant-time">--:--:--</div>
-    <div id="localZone" class="zone-note">(Detecting timezone…)</div>
-  </div>
-</section>
-
-      <blockquote>
-        <p>The Universe is under no obligation to make sense to you <br>-Neil deGrasse Tyson</p>
+        <p id="tempOutput"></p>
       </blockquote>
 
-<section class="left">
-  <h2>📍 Coordinates</h2>
+      <section>
+        <h2>📅 Select a Date</h2>
 
-  <form id="workForm">
-    <label for="firstName">Latitude</label><br>
-    <input type="text" id="latitude" name="latitude" required><br><br>
+        <form id="dateForm">
+          <label for="eventDate">Choose a date:</label><br />
+          <input type="date" id="eventDate" name="eventDate" required /><br /><br />
 
-    <label for="lastName">Longitude</label><br>
-    <input type="text" id="longitude" name="longitude" required><br><br>
+          <button type="submit">Submit</button>
+        </form>
 
-    <button type="submit">Save</button>
-  </form>
+        <p id="dateOutput"></p>
+      </section>
 
-  <p id="formOutput"></p>
-</section>
+      <section class="light">
+        <h2>🕒 Your Local Time</h2>
+        <div id="timeBlock">
+          <div id="localTime" class="giant-time">--:--:--</div>
+          <div id="localZone" class="zone-note">(Detecting timezone…)</div>
+        </div>
+      </section>
 
-<blockquote id="submitBlock">
-  <button id="finalSubmit">Submit</button>
-  <p id="submitMessage"></p>
-</blockquote>
+      <blockquote>
+        <p>
+          The Universe is under no obligation to make sense to you <br />-Neil deGrasse Tyson
+        </p>
+      </blockquote>
 
+      <section class="left">
+        <h2>📍 Your Location</h2>
 
+        <div id="locationBlock">
+          <p id="locationStatus">Trying to detect your location…</p>
+          <p id="locationCoords"></p>
+          <button id="useLocationBtn" disabled>Use this location</button>
+        </div>
+      </section>
 
+      <section class="left">
+        <h2>📍 Coordinates</h2>
+
+        <form id="workForm">
+          <label for="latitude">Latitude</label><br />
+          <input type="text" id="latitude" name="latitude" required /><br /><br />
+
+          <label for="longitude">Longitude</label><br />
+          <input type="text" id="longitude" name="longitude" required /><br /><br />
+
+          <button type="submit">Save</button>
+        </form>
+
+        <p id="formOutput"></p>
+      </section>
+
+      <blockquote id="submitBlock">
+        <button id="finalSubmit">Submit</button>
+        <p id="submitMessage"></p>
+      </blockquote>
     </main>
-    
 
+    <script>
+      (function () {
+        const statusEl = document.getElementById("locationStatus");
+        const coordsEl = document.getElementById("locationCoords");
+        const useBtn = document.getElementById("useLocationBtn");
 
+        const latInput = document.getElementById("latitude");
+        const lonInput = document.getElementById("longitude");
+        const submitMsg = document.getElementById("submitMessage");
 
+        let currentCoords = null;
 
+        function setCoords(lat, lon, sourceText) {
+          currentCoords = { lat, lon };
 
+          coordsEl.textContent =
+            "Latitude: " +
+            lat.toFixed(4) +
+            ", Longitude: " +
+            lon.toFixed(4) +
+            (sourceText ? " (" + sourceText + ")" : "");
 
+          statusEl.textContent = "Location detected:";
+          useBtn.disabled = false;
+        }
 
+        function tryIpFallback() {
+          statusEl.textContent =
+            "Could not get precise device location. Trying IP-based location…";
 
+          fetch("https://ipapi.co/json/")
+            .then((res) => res.json())
+            .then((data) => {
+              if (!data || data.latitude == null || data.longitude == null) {
+                throw new Error("No coordinates in IP response");
+              }
 
+              const lat = parseFloat(data.latitude);
+              const lon = parseFloat(data.longitude);
+              const city = data.city || "";
+              const country = data.country_name || "";
 
+              let source = "approximate via IP";
+              if (city || country) {
+                source += " – " + [city, country].filter(Boolean).join(", ");
+              }
 
+              setCoords(lat, lon, source);
+            })
+            .catch((err) => {
+              console.error("IP geolocation error:", err);
+              statusEl.textContent =
+                "Could not get your location automatically (device + IP both failed).";
+              coordsEl.textContent =
+                "You can still type coordinates manually in the form below.";
+              useBtn.disabled = true;
+            });
+        }
 
+        function geoSuccess(position) {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          console.log("Browser geolocation success:", lat, lon);
+          setCoords(lat, lon, "from browser (GPS / Wi-Fi)");
+        }
 
+        function geoError(error) {
+          console.warn("Browser geolocation error:", error);
+          // For any error (permission denied, unavailable, timeout), IP fallback
+          tryIpFallback();
+        }
 
+        // Getting device location
+        if ("geolocation" in navigator) {
+          statusEl.textContent = "Trying to get your device location…";
 
+          navigator.geolocation.getCurrentPosition(geoSuccess, geoError, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          });
+        } else {
+          statusEl.textContent =
+            "Browser does not support geolocation. Using IP-based location…";
+          tryIpFallback();
+        }
 
+        // When user clicks "Use this location", copy into the form
+        useBtn.addEventListener("click", function () {
+          if (!currentCoords) return;
 
+          latInput.value = currentCoords.lat;
+          lonInput.value = currentCoords.lon;
+
+          if (submitMsg) {
+            submitMsg.textContent = "Location copied into the coordinates form.";
+          }
+        });
+      })();
+    </script>
   </body>
 </html>
