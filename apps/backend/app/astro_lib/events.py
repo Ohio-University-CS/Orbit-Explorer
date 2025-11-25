@@ -31,9 +31,7 @@ def gen_events():
     LUNAR_ECLIPSE = EventType("LUNAR_ECLIPSE", [
         EventType("PENUMBRAL"),
         EventType("PARTIAL"),
-        EventType("TOTAL"),
-        EventType("CENTRAL"),
-        EventType("SELENELION")
+        EventType("TOTAL")
     ])
 
     SOLAR_ECLIPSE = EventType("SOLAR_ECLIPSE", [
@@ -96,6 +94,7 @@ class EventType(BaseModel):
 
 planets = load('de421.bsp')
 earth = planets['earth']
+
 
 def get_body_info(name: str):
     name = name.lower()

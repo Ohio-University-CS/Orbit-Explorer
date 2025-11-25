@@ -5,12 +5,19 @@ from app.services.event import get_events, event_types
 from app.schemas.event_item import EventItem
 from app.schemas.event_criteria import EventCriteria
 from app.schemas.location import GeodeticLocation
+from app.schemas.events import EventSearchRequest
 
 router = APIRouter()
 
-@router.get("/search", response_model = List[EventItem])
-async def event_search(start_time: int, end_time: int, loc: GeodeticLocation, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
-    events = await get_events(loc, start_time, end_time, whitelisted_event_types, event_specific_criteria)
+@router.post("/search", response_model=List[EventItem])
+async def event_search(req: EventSearchRequest) -> List[EventItem]:
+    events = await get_events(
+        req.loc,
+        req.start_time,
+        req.end_time,
+        req.whitelisted_event_types,
+        req.event_specific_criteria,
+    )
     return events
 
 @router.get("/types")
