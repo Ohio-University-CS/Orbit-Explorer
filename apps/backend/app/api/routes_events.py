@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from app.services.event import get_events, event_types
+from app.services.spice_events import get_events, event_types
 
 from app.schemas.event_item import EventItem
 from app.schemas.event_criteria import EventCriteria

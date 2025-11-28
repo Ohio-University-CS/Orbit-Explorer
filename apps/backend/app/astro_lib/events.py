@@ -25,6 +25,18 @@ def gen_events():
     lunar_search_params = [
         Field("")
     ]
+
+    """
+OCCULTATION
+  ├─ ECLIPSE
+  │    ├─ SOLAR (partial, total, annular, hybrid)
+  │    └─ LUNAR (penumbral, partial, total)
+  ├─ PLANETARY_OCCULTATION
+  ├─ LUNAR_OCCULTATION (of stars/planets)
+  ├─ ASTEROID_OCCULTATION
+  └─ TRANSIT
+
+    """
     # ------------------------------
     # 1. Eclipses
     # ------------------------------
