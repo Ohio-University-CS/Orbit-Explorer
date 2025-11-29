@@ -7,49 +7,76 @@ const API_BASE =
   process.env.REACT_APP_API_BASE ||
   "http://localhost:8000";
 
+// COLOR PALETTE: ORANGE + BLACK + WHITE
+const COLORS = {
+  background: "#000000",
+  card: "#080808",
+  cardBorder: "#ff8a1e",
+  text: "#ffffff",
+  textMuted: "#e0e0e0",
+  headingMuted: "#ffb347",
+  orange: "#ff8a1e",
+  orangeSoft: "#ffb347",
+  sectionBg: "#101010",
+  inputBg: "#ffffff",
+  inputBorder: "#555555",
+};
+
+// FULL-PAGE WRAPPER
 const pageStyle = {
   minHeight: "100vh",
-  background: "#050505",
-  color: "#fff",
-  display: "flex",
-  justifyContent: "center",
-  padding: "40px 16px",
-  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+  backgroundColor: COLORS.background,
+  color: COLORS.text,
+  fontFamily:
+    "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
 };
 
+// MAIN SHELL (NOW FULL WIDTH)
 const shellStyle = {
+  minHeight: "100vh",
   width: "100%",
-  maxWidth: "960px",
-  background: "radial-gradient(circle at top, #8b3a0a 0, #140805 55%)",
-  borderRadius: "28px",
-  padding: "28px 24px 32px",
-  boxShadow: "0 0 40px rgba(0,0,0,0.7)",
-  border: "1px solid rgba(255,150,80,0.35)",
+  maxWidth: "100%",
+  margin: 0,
+  padding: "32px 40px 40px",
+  boxSizing: "border-box",
+  backgroundColor: COLORS.card,
+  borderRadius: 0,
+  border: `2px solid ${COLORS.cardBorder}`,
 };
 
+// SECTIONS
 const sectionStyle = {
   marginTop: "20px",
   padding: "18px 18px 20px",
-  borderRadius: "18px",
-  background:
-    "linear-gradient(135deg, rgba(10,4,2,0.96), rgba(40,15,5,0.95))",
-  border: "1px solid rgba(255,150,80,0.35)",
+  borderRadius: "16px",
+  backgroundColor: COLORS.sectionBg,
+  border: `1px solid ${COLORS.inputBorder}`,
 };
 
+const sectionHeaderStyle = {
+  fontSize: "13px",
+  opacity: 0.95,
+  marginBottom: "6px",
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  color: COLORS.headingMuted,
+};
+
+// FORM
 const labelStyle = {
   display: "block",
   fontSize: "13px",
   marginBottom: "4px",
-  color: "#ffdda8",
+  color: COLORS.text,
 };
 
 const inputStyle = {
   width: "100%",
   padding: "10px 12px",
   borderRadius: "10px",
-  border: "1px solid rgba(255,170,120,0.7)",
-  background: "rgba(10,5,2,0.95)",
-  color: "#fff",
+  border: `1px solid ${COLORS.inputBorder}`,
+  backgroundColor: COLORS.inputBg,
+  color: "#111111",
   fontSize: "14px",
   outline: "none",
 };
@@ -62,26 +89,26 @@ const chipRowStyle = {
 };
 
 const chipStyle = (active) => ({
-  padding: "6px 10px",
+  padding: "6px 11px",
   borderRadius: "999px",
   border: active
-    ? "1px solid #ffae5e"
-    : "1px solid rgba(255,170,120,0.55)",
-  background: active ? "#ff964f" : "transparent",
-  color: active ? "#190b04" : "#ffd8a4",
+    ? `1px solid ${COLORS.orangeSoft}`
+    : `1px solid ${COLORS.orangeSoft}99`,
+  backgroundColor: active ? COLORS.orange : "transparent",
+  color: active ? "#000000" : COLORS.text,
   fontSize: "12px",
   cursor: "pointer",
 });
 
+// BUTTONS
 const primaryButtonStyle = {
   marginTop: "18px",
   width: "100%",
   padding: "16px 0",
   borderRadius: "999px",
   border: "none",
-  background:
-    "linear-gradient(135deg, #ff964f, #ffb86b)",
-  color: "#1a0600",
+  backgroundColor: COLORS.orange,
+  color: "#000000",
   fontWeight: 700,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
@@ -90,12 +117,19 @@ const primaryButtonStyle = {
   boxShadow: "0 10px 20px rgba(0,0,0,0.7)",
 };
 
+const primaryButtonDisabledStyle = {
+  ...primaryButtonStyle,
+  opacity: 0.65,
+  cursor: "default",
+};
+
+// RESULTS
 const resultCardStyle = {
   marginTop: "10px",
   padding: "10px 12px",
   borderRadius: "12px",
-  background: "rgba(6,2,1,0.95)",
-  border: "1px solid rgba(255,170,120,0.5)",
+  backgroundColor: "#141414",
+  border: `1px solid ${COLORS.inputBorder}`,
   fontSize: "13px",
 };
 
@@ -141,7 +175,6 @@ export default function OccultationSearch() {
           throw new Error("Failed to load event types");
         }
         const data = await res.json();
-        // DB column is event_name in your SQL seed
         const names = data.map((t) => t.event_name || t.name || t.id);
         setAvailableTypes(names);
       } catch (err) {
@@ -175,10 +208,7 @@ export default function OccultationSearch() {
   };
 
   const addCriterion = () => {
-    setCriteria((prev) => [
-      ...prev,
-      { name: "", description: "" },
-    ]);
+    setCriteria((prev) => [...prev, { name: "", description: "" }]);
   };
 
   const onSearch = async (e) => {
@@ -195,12 +225,8 @@ export default function OccultationSearch() {
         throw new Error("Latitude and longitude are required.");
       }
 
-      const startEpoch = Math.floor(
-        new Date(startTime).getTime() / 1000
-      );
-      const endEpoch = Math.floor(
-        new Date(endTime).getTime() / 1000
-      );
+      const startEpoch = Math.floor(new Date(startTime).getTime() / 1000);
+      const endEpoch = Math.floor(new Date(endTime).getTime() / 1000);
 
       const payload = {
         start_time: startEpoch,
@@ -212,10 +238,7 @@ export default function OccultationSearch() {
         },
         whitelisted_event_types: selectedTypes,
         event_specific_criteria: criteria
-          .filter(
-            (c) =>
-              c.name.trim() || c.description.trim()
-          )
+          .filter((c) => c.name.trim() || c.description.trim())
           .map((c) => ({
             name: c.name.trim(),
             description: c.description.trim(),
@@ -232,18 +255,14 @@ export default function OccultationSearch() {
 
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(
-          text || `HTTP error ${res.status}`
-        );
+        throw new Error(text || `HTTP error ${res.status}`);
       }
 
       const data = await res.json();
       setResults(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(err);
-      setErrorText(
-        "Search failed. Please check backend logs."
-      );
+      setErrorText("Search failed. Please check backend logs.");
     } finally {
       setLoading(false);
     }
@@ -256,6 +275,7 @@ export default function OccultationSearch() {
           style={{
             fontSize: "28px",
             marginBottom: "4px",
+            color: COLORS.orange,
           }}
         >
           Occultation Search
@@ -263,60 +283,39 @@ export default function OccultationSearch() {
         <p
           style={{
             fontSize: "13px",
-            color: "#ffddb0",
+            color: COLORS.textMuted,
             marginBottom: "8px",
           }}
         >
-          Choose a time window, observer location, and event
-          types, then search.
+          Choose a time window, observer location, and event types, then search.
         </p>
 
         {/* 1. Time window */}
         <section style={sectionStyle}>
-          <div
-            style={{
-              fontSize: "13px",
-              opacity: 0.9,
-              marginBottom: "6px",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#ffb472",
-            }}
-          >
-            1 · Time Window (Local / EST)
-          </div>
+          <div style={sectionHeaderStyle}>1 · Time Window (Local / EST)</div>
 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: "12px",
             }}
           >
             <div>
-              <label style={labelStyle}>
-                Start time
-              </label>
+              <label style={labelStyle}>Start time</label>
               <input
                 type="datetime-local"
                 value={startTime}
-                onChange={(e) =>
-                  setStartTime(e.target.value)
-                }
+                onChange={(e) => setStartTime(e.target.value)}
                 style={inputStyle}
               />
             </div>
             <div>
-              <label style={labelStyle}>
-                End time
-              </label>
+              <label style={labelStyle}>End time</label>
               <input
                 type="datetime-local"
                 value={endTime}
-                onChange={(e) =>
-                  setEndTime(e.target.value)
-                }
+                onChange={(e) => setEndTime(e.target.value)}
                 style={inputStyle}
               />
             </div>
@@ -325,65 +324,41 @@ export default function OccultationSearch() {
 
         {/* 2. Observer location */}
         <section style={sectionStyle}>
-          <div
-            style={{
-              fontSize: "13px",
-              opacity: 0.9,
-              marginBottom: "6px",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#ffb472",
-            }}
-          >
-            2 · Observer Location
-          </div>
+          <div style={sectionHeaderStyle}>2 · Observer Location</div>
 
           <div
             style={{
               display: "grid",
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(180px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
               gap: "12px",
             }}
           >
             <div>
-              <label style={labelStyle}>
-                Latitude (°)
-              </label>
+              <label style={labelStyle}>Latitude (°)</label>
               <input
                 type="text"
                 value={lat}
-                onChange={(e) =>
-                  setLat(e.target.value)
-                }
+                onChange={(e) => setLat(e.target.value)}
                 style={inputStyle}
                 placeholder="e.g. 40.0000"
               />
             </div>
             <div>
-              <label style={labelStyle}>
-                Longitude (°)
-              </label>
+              <label style={labelStyle}>Longitude (°)</label>
               <input
                 type="text"
                 value={lon}
-                onChange={(e) =>
-                  setLon(e.target.value)
-                }
+                onChange={(e) => setLon(e.target.value)}
                 style={inputStyle}
                 placeholder="e.g. -80.0000"
               />
             </div>
             <div>
-              <label style={labelStyle}>
-                Elevation (m)
-              </label>
+              <label style={labelStyle}>Elevation (m)</label>
               <input
                 type="number"
                 value={elevation}
-                onChange={(e) =>
-                  setElevation(e.target.value)
-                }
+                onChange={(e) => setElevation(e.target.value)}
                 style={inputStyle}
                 placeholder="e.g. 100"
               />
@@ -393,27 +368,15 @@ export default function OccultationSearch() {
 
         {/* 3. Event types */}
         <section style={sectionStyle}>
-          <div
-            style={{
-              fontSize: "13px",
-              opacity: 0.9,
-              marginBottom: "6px",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#ffb472",
-            }}
-          >
-            3 · Event Types
-          </div>
+          <div style={sectionHeaderStyle}>3 · Event Types</div>
           <p
             style={{
               fontSize: "12px",
-              color: "#ffcf9e",
+              color: COLORS.textMuted,
               marginBottom: "6px",
             }}
           >
-            These names come directly from the{" "}
-            <code>celestial_event_types</code> table.
+            Select which event types to include in the search.
           </p>
 
           <div style={chipRowStyle}>
@@ -431,9 +394,7 @@ export default function OccultationSearch() {
               <button
                 key={name}
                 type="button"
-                style={chipStyle(
-                  selectedTypes.includes(name)
-                )}
+                style={chipStyle(selectedTypes.includes(name))}
                 onClick={() => toggleType(name)}
               >
                 {name}
@@ -444,18 +405,7 @@ export default function OccultationSearch() {
 
         {/* 4. Optional criteria */}
         <section style={sectionStyle}>
-          <div
-            style={{
-              fontSize: "13px",
-              opacity: 0.9,
-              marginBottom: "6px",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#ffb472",
-            }}
-          >
-            4 · Optional Criteria
-          </div>
+          <div style={sectionHeaderStyle}>4 · Optional Criteria</div>
 
           {criteria.map((c, idx) => (
             <div
@@ -464,18 +414,12 @@ export default function OccultationSearch() {
                 marginTop: idx === 0 ? 0 : 10,
               }}
             >
-              <label style={labelStyle}>
-                Criteria name
-              </label>
+              <label style={labelStyle}>Criteria name</label>
               <input
                 type="text"
                 value={c.name}
                 onChange={(e) =>
-                  updateCriterion(
-                    idx,
-                    "name",
-                    e.target.value
-                  )
+                  updateCriterion(idx, "name", e.target.value)
                 }
                 style={inputStyle}
                 placeholder="e.g. occultation_depth"
@@ -491,11 +435,7 @@ export default function OccultationSearch() {
               <textarea
                 value={c.description}
                 onChange={(e) =>
-                  updateCriterion(
-                    idx,
-                    "description",
-                    e.target.value
-                  )
+                  updateCriterion(idx, "description", e.target.value)
                 }
                 style={{
                   ...inputStyle,
@@ -514,10 +454,9 @@ export default function OccultationSearch() {
               marginTop: "10px",
               padding: "6px 12px",
               borderRadius: "999px",
-              border:
-                "1px solid rgba(255,190,140,0.9)",
-              background: "transparent",
-              color: "#ffdcb1",
+              border: `1px solid ${COLORS.orangeSoft}`,
+              backgroundColor: "transparent",
+              color: COLORS.textMuted,
               fontSize: "12px",
               cursor: "pointer",
             }}
@@ -542,34 +481,21 @@ export default function OccultationSearch() {
         <button
           type="button"
           onClick={onSearch}
-          style={primaryButtonStyle}
+          style={loading ? primaryButtonDisabledStyle : primaryButtonStyle}
           disabled={loading}
         >
-          {loading
-            ? "Searching..."
-            : "Search Occultations"}
+          {loading ? "Searching..." : "Search Occultations"}
         </button>
 
         {/* 5. Results */}
         <section style={sectionStyle}>
-          <div
-            style={{
-              fontSize: "13px",
-              opacity: 0.9,
-              marginBottom: "6px",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "#ffb472",
-            }}
-          >
-            5 · Results
-          </div>
+          <div style={sectionHeaderStyle}>5 · Results</div>
 
           {results.length === 0 && !loading && (
             <p
               style={{
                 fontSize: "12px",
-                color: "#ffcf9e",
+                color: COLORS.textMuted,
               }}
             >
               No events returned yet.
@@ -582,6 +508,7 @@ export default function OccultationSearch() {
                 style={{
                   fontWeight: 600,
                   marginBottom: 2,
+                  color: COLORS.orangeSoft,
                 }}
               >
                 {ev.name || ev.type || ev.id}
@@ -589,7 +516,7 @@ export default function OccultationSearch() {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#ffcf9e",
+                  color: COLORS.textMuted,
                   marginBottom: 2,
                 }}
               >
@@ -601,16 +528,13 @@ export default function OccultationSearch() {
                   color: "#d8c7b5",
                 }}
               >
-                Time:{" "}
-                {ev.time
-                  ? new Date(ev.time).toString()
-                  : "—"}
+                Time: {ev.time ? new Date(ev.time).toString() : "—"}
               </div>
               {ev.desc && (
                 <div
                   style={{
                     fontSize: 12,
-                    color: "#e9dfd5",
+                    color: "#f0f0f0",
                     marginTop: 2,
                   }}
                 >
@@ -624,6 +548,8 @@ export default function OccultationSearch() {
     </div>
   );
 }
+
+
 
 
 
