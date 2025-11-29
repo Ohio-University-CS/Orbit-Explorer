@@ -13,6 +13,7 @@
     <canvas id="bg"></canvas>
 
     <main>
+      <!-- Temperature block -->
       <header>
         <h1>Cosmic Events</h1>
         <p>Scroll to Enter Inputs 👇</p>
@@ -38,6 +39,7 @@
         <p id="tempOutput"></p>
       </blockquote>
 
+      <!-- Date block (not saved right now, just UI) -->
       <section>
         <h2>📅 Select a Date</h2>
 
@@ -51,6 +53,7 @@
         <p id="dateOutput"></p>
       </section>
 
+      <!-- Time block -->
       <section class="light">
         <h2>🕒 Your Local Time</h2>
         <div id="timeBlock">
@@ -59,13 +62,8 @@
         </div>
       </section>
 
+      <!-- Location detection block -->
       <blockquote>
-        <p>
-          The Universe is under no obligation to make sense to you <br />-Neil deGrasse Tyson
-        </p>
-      </blockquote>
-
-      <section class="left">
         <h2>📍 Your Location</h2>
 
         <div id="locationBlock">
@@ -73,17 +71,18 @@
           <p id="locationCoords"></p>
           <button id="useLocationBtn" disabled>Use this location</button>
         </div>
-      </section>
+      </blockquote>
 
+      <!-- Manual coordinates block (these are the values we carry over) -->
       <section class="left">
         <h2>📍 Coordinates</h2>
 
         <form id="workForm">
           <label for="latitude">Latitude</label><br />
-          <input type="text" id="latitude" name="latitude" required /><br /><br />
+          <input type="text" id="latitude" name="latitude" /><br /><br />
 
           <label for="longitude">Longitude</label><br />
-          <input type="text" id="longitude" name="longitude" required /><br /><br />
+          <input type="text" id="longitude" name="longitude" /><br /><br />
 
           <button type="submit">Save</button>
         </form>
@@ -91,14 +90,51 @@
         <p id="formOutput"></p>
       </section>
 
+      <!-- Final submit that jumps to /next -->
       <blockquote id="submitBlock">
-        <button id="finalSubmit">Submit</button>
+        <button id="finalSubmit" type="button">Submit</button>
         <p id="submitMessage"></p>
       </blockquote>
     </main>
 
     <script>
-      (function () {
+      // Utilities
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      // ---- Local time display ----
+      (function setupClock() {
+        const timeEl = document.getElementById("localTime");
+        const zoneEl = document.getElementById("localZone");
+
+        function tick() {
+          const now = new Date();
+
+          const h = now.getHours();
+          const m = now.getMinutes();
+          const s = now.getSeconds();
+
+          let hour12 = h % 12;
+          if (hour12 === 0) hour12 = 12;
+          const ampm = h >= 12 ? "p.m." : "a.m.";
+
+          timeEl.textContent =
+            pad(hour12) + ":" + pad(m) + ":" + pad(s) + " " + ampm;
+
+          const tz = Intl.DateTimeFormat(undefined, {
+            timeZoneName: "short",
+          }).formatToParts(now);
+          const zonePart = tz.find((p) => p.type === "timeZoneName");
+          zoneEl.textContent = zonePart ? zonePart.value : "";
+        }
+
+        tick();
+        setInterval(tick, 1000);
+      })();
+
+      // ---- Location detection (does NOT auto-fill coordinates) ----
+      (function setupLocation() {
         const statusEl = document.getElementById("locationStatus");
         const coordsEl = document.getElementById("locationCoords");
         const useBtn = document.getElementById("useLocationBtn");
@@ -165,11 +201,9 @@
 
         function geoError(error) {
           console.warn("Browser geolocation error:", error);
-          // For any error (permission denied, unavailable, timeout), IP fallback
           tryIpFallback();
         }
 
-        // Getting device location
         if ("geolocation" in navigator) {
           statusEl.textContent = "Trying to get your device location…";
 
@@ -184,18 +218,102 @@
           tryIpFallback();
         }
 
-        // When user clicks "Use this location", copy into the form
+        // Only when user clicks this do we copy into the coordinate inputs
         useBtn.addEventListener("click", function () {
           if (!currentCoords) return;
 
-          latInput.value = currentCoords.lat;
-          lonInput.value = currentCoords.lon;
+          latInput.value = currentCoords.lat.toFixed(6);
+          lonInput.value = currentCoords.lon.toFixed(6);
 
           if (submitMsg) {
             submitMsg.textContent = "Location copied into the coordinates form.";
           }
         });
       })();
+
+      // ---- Forms + localStorage wiring ----
+      (function setupForms() {
+        const tempForm = document.getElementById("tempForm");
+        const tempInput = document.getElementById("temperature");
+        const unitSelect = document.getElementById("unit");
+        const tempOutput = document.getElementById("tempOutput");
+
+        const workForm = document.getElementById("workForm");
+        const latInput = document.getElementById("latitude");
+        const lonInput = document.getElementById("longitude");
+        const formOutput = document.getElementById("formOutput");
+
+        const finalSubmitBtn = document.getElementById("finalSubmit");
+        const submitMsg = document.getElementById("submitMessage");
+
+        // Temperature form: save value + unit, but don't reload page
+        tempForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const t = tempInput.value.trim();
+          const u = unitSelect.value;
+
+          if (!t) {
+            tempOutput.textContent = "Please enter a temperature.";
+            return;
+          }
+
+          localStorage.setItem("oe_temperature", t);
+          localStorage.setItem("oe_tempUnit", u);
+          tempOutput.textContent = "Saved temperature: " + t + " °" + u;
+        });
+
+        // Coordinate form: save lat/lon, don't reload page
+        workForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const lat = latInput.value.trim();
+          const lon = lonInput.value.trim();
+
+          if (!lat || !lon) {
+            formOutput.textContent = "Please enter both latitude and longitude.";
+            return;
+          }
+
+          localStorage.setItem("oe_latitude", lat);
+          localStorage.setItem("oe_longitude", lon);
+          formOutput.textContent = "Saved coordinates: " + lat + ", " + lon;
+        });
+
+        // Final submit: snapshot current local time (EST for you), save last inputs, go to /next
+        finalSubmitBtn.addEventListener("click", function () {
+          const now = new Date();
+          const localStart =
+            now.getFullYear() +
+            "-" +
+            pad(now.getMonth() + 1) +
+            "-" +
+            pad(now.getDate()) +
+            "T" +
+            pad(now.getHours()) +
+            ":" +
+            pad(now.getMinutes());
+
+          localStorage.setItem("oe_startTimeLocal", localStart);
+
+          const lat = latInput.value.trim();
+          const lon = lonInput.value.trim();
+          if (lat) localStorage.setItem("oe_latitude", lat);
+          if (lon) localStorage.setItem("oe_longitude", lon);
+
+          const t = tempInput.value.trim();
+          const u = unitSelect.value;
+          if (t) {
+            localStorage.setItem("oe_temperature", t);
+            localStorage.setItem("oe_tempUnit", u);
+          }
+
+          submitMsg.textContent = "Inputs saved. Opening occultation search…";
+
+          // Navigate to React /next route (OccultationSearch)
+          window.location.href = "/next";
+        });
+      })();
     </script>
   </body>
 </html>
+
+

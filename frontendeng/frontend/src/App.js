@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import Main from './components/Main';
 import Login from './Login';
 import Signup from './Signup';
+import OccultationSearch from './OccultationSearch.jsx';
 
 const Button = styled.button`
   background-color: #FF964F;
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/cosmic" element={<CosmicFrame />} />
+        <Route path="/next" element={<OccultationSearch />} />
       </Routes>
     </BrowserRouter>
   );
