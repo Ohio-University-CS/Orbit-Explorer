@@ -24,6 +24,12 @@ location = GeodeticLocation(
     alt_km=0
 )
 
+location = GeodeticLocation(
+    lat =42.22038,
+    lon=-4.02100,
+    alt_km=0,
+)
+
 
 criteria = [
 ]
@@ -31,9 +37,10 @@ start_time = datetime(2026, 1, 1)
 end_time   = datetime(2026, 11, 11)
 
 async def main():
-    #guid = generate_site_guid(21)
-    #create_site_helper(guid, 399901, location)
-    site = "GC87F937ACA4E436C8177"
+    guid = generate_site_guid(21)
+    create_site_helper(guid, 399901, location)
+    #site = "GC87F937ACA4E436C8177"
+    site=guid
     handle_occultations(site, start_time, end_time)
 
 # Run the async main function

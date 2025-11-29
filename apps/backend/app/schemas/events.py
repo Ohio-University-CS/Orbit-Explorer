@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List
+from datetime import datetime
 
 from app.schemas.location import GeodeticLocation
 from app.schemas.event_criteria import EventCriteria
@@ -9,3 +10,10 @@ class EventSearchRequest(BaseModel):
     loc: GeodeticLocation
     whitelisted_event_types: List[str]
     event_specific_criteria: List[EventCriteria]
+
+class OccultationSearchRequest(BaseModel):
+    loc: GeodeticLocation
+    start_time: datetime
+    end_time: datetime
+    occulting_naif_id: str
+    occulted_naif_id: str

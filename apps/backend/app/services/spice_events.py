@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from functools import partial
 
@@ -21,7 +21,11 @@ import random
 import string
 from pathlib import Path
 from enum import Enum
-from typing import Optional
+
+#import matplotlib
+#matplotlib.use('TkAgg')
+#import matplotlib.pyplot as plt
+
 APP_ROOT = Path(__file__).resolve().parent.parent
 
 # Database connection function
@@ -340,6 +344,10 @@ def datetime_to_utc_string(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%S.") + f"{dt.microsecond:06d}"
 
 def handle_occultations(site_name: str, start_time: datetime, end_time: datetime):
+    response = {
+        "occultations": [],
+    }
+
     moon = SPICE_BODY()
     moon.spk_file = kernel_file(KernelType.SPK, ObjectType.PLANET, "de432s.bsp")
     moon.pck_file = kernel_file(KernelType.PCK, None, "pck00011.tpc")
@@ -355,7 +363,7 @@ def handle_occultations(site_name: str, start_time: datetime, end_time: datetime
     sun.pck_file = kernel_file(KernelType.PCK, None, "pck00011.tpc")
     sun.naif_id = "10"
 
-    occultations = find_occultations(
+    occultations_ANY = find_occultations(
         "ANY",
         obsrvr=site,
         front=moon,
@@ -364,80 +372,144 @@ def handle_occultations(site_name: str, start_time: datetime, end_time: datetime
         bframe='IAU_SUN',
         start=start_time,
         end=end_time,
+        step=60.0
     )
 
     print("ANY OCCULTATIONS")
-    for start_dt, end_dt in occultations:
+    for start_dt, end_dt in occultations_ANY:
         print(f"Start: {start_dt}, End: {end_dt}")
+        occultation_res = {
+            "start_utc": start_dt,
+            "end_utc": end_dt,
+            "computational_data": {},
+        }
+
+        occultations = find_occultations(
+            "FULL",
+            obsrvr=site,
+            front=moon,
+            fframe='IAU_MOON',
+            back=sun,
+            bframe='IAU_SUN',
+            start=start_dt,
+            end=end_dt,
+            step=1.0
+        )
+
+        print("FULL OCCULTATIONS")
+        for start_dt, end_dt in occultations:
+            print(f"Start: {start_dt}, End: {end_dt}")
+
+        occultations = find_occultations(
+            "PARTIAL",
+            obsrvr=site,
+            front=moon,
+            fframe='IAU_MOON',
+            back=sun,
+            bframe='IAU_SUN',
+            start=start_dt,
+            end=end_dt,
+            step=60.0
+        )
 
 
-    intervals = gfsep(
-        targ1=moon,
-        inframe1="IAU_MOON",
-        targ2=sun,
-        inframe2="IAU_SUN",
-        abcorr="NONE",
-        obsrvr=site,
-        relate="ABSMIN",
-        refval=0,
-        adjust=0,
-        step=60,
-        start=start_time,
-        end=end_time
-    )
+        print("PARTIAL OCCULTATIONS")
+        for start_dt, end_dt in occultations:
+            print(f"Start: {start_dt}, End: {end_dt}")
 
-    occultations = find_occultations(
-        "FULL",
-        obsrvr=site,
-        front=moon,
-        fframe='IAU_MOON',
-        back=sun,
-        bframe='IAU_SUN',
-        start=start_time,
-        end=end_time,
-    )
-
-    print("FULL OCCULTATIONS")
-    for start_dt, end_dt in occultations:
-        print(f"Start: {start_dt}, End: {end_dt}")
-
-    occultations = find_occultations(
-        "PARTIAL",
-        obsrvr=site,
-        front=moon,
-        fframe='IAU_MOON',
-        back=sun,
-        bframe='IAU_SUN',
-        start=start_time,
-        end=end_time,
-    )
+        occultations = find_occultations(
+            "ANNULAR",
+            obsrvr=site,
+            front=moon,
+            fframe='IAU_MOON',
+            back=sun,
+            bframe='IAU_SUN',
+            start=start_dt,
+            end=end_dt,
+            step=30.0
+        )
 
 
-    print("PARTIAL OCCULTATIONS")
-    for start_dt, end_dt in occultations:
-        print(f"Start: {start_dt}, End: {end_dt}")
+        print("ANNULAR OCCULTATIONS")
+        for start_dt, end_dt in occultations:
+            print(f"Start: {start_dt}, End: {end_dt}")
 
-    occultations = find_occultations(
-        "ANNULAR",
-        obsrvr=site,
-        front=moon,
-        fframe='IAU_MOON',
-        back=sun,
-        bframe='IAU_SUN',
-        start=start_time,
-        end=end_time,
-    )
-
-
-    print("ANNULAR OCCULTATIONS")
-    for start_dt, end_dt in occultations:
-        print(f"Start: {start_dt}, End: {end_dt}")
     n=15
     delta_time = timedelta(seconds=n)
+
+    times = []
+    for start_dt, end_dt in occultations_ANY:
+        dt = start_dt  # Initialize dt with start time
+
+        while dt <= end_dt:
+            times.append(dt)
+            dt = dt + delta_time
+        if dt - delta_time < end_dt:
+            times.append(end_dt)
+
+
+    occulting_relpos = get_relative_pos(
+        targ=moon,
+        times=times,
+        ref_frame="J2000",
+        abcorr="NONE",
+        obsrvr=site
+    )
+
+    occulted_relpos = get_relative_pos(
+        targ=sun,
+        times=times,
+        ref_frame="J2000",
+        abcorr="NONE",
+        obsrvr=site
+    )
+
+
+    occulting_rngs_list = []
+    occulting_azs_list = []
+    occulting_els_list = []
+
+    occulted_rngs_list = []
+    occulted_azs_list = []
+    occulted_els_list = []
+
+
+    for pos in occulting_relpos["pos"]:
+        occulting_rng, occulting_az, occulting_el = sp.recazl(pos, True, True)
+        occulting_rngs_list.append(occulting_rng)
+        occulting_azs_list.append(occulting_az)
+        occulting_els_list.append(occulting_el)
+
+    for pos in occulted_relpos["pos"]:
+        occulted_rng, occulted_az, occulted_el = sp.recazl(pos, True, True)
+        occulted_rngs_list.append(occulted_rng)
+        occulted_azs_list.append(occulted_az)
+        occulted_els_list.append(occulted_el)
+
+
+    occultation_res["computational_data"]["sample_times"] = times
+    occultation_res["computational_data"]["occulting_dist"] = occulting_rng
+    occultation_res["computational_data"]["occulting_azimuths"] = occulting_azs
+    occultation_res["computational_data"]["occulting_elevations"] = occulting_els
+
+    occultation_res["computational_data"]["occulted_dist"] = occulted_rng
+    occultation_res["computational_data"]["occulted_azimuths"] = occulted_azs
+    occultation_res["computational_data"]["occulted_elevations"] = occulted_els
+
+    response["occultations"].append(occultation_res)
+    # Convert the lists to NumPy arrays
+    occulting_rngs = np.array(occulting_rngs_list)
+    occulting_azs = np.array(occulting_azs_list)
+    occulting_els = np.array(occulting_els_list)
+
+    occulted_rngs = np.array(occulted_rngs_list)
+    occulted_azs = np.array(occulted_azs_list)
+    occulted_els = np.array(occulted_els_list)
+
     for start_dt, end_dt in occultations:
         dt = start_dt  # Initialize dt with start time
 
-        # Loop through the time range with increments of delta_time
+
         while dt <= end_dt:
             phase_angle = calculate_phase_angle(dt, moon, sun, site)
             print(f"PHASE ANGLE at {dt}: {phase_angle}")
@@ -450,10 +522,11 @@ def handle_occultations(site_name: str, start_time: datetime, end_time: datetime
             # Calculate the phase angle for the last time step before end_dt
             phase_angle = calculate_phase_angle(dt - delta_time, moon, sun, site)
             print(f"PHASE ANGLE at {dt - delta_time}: {phase_angle}")
-    return occultations
+    return response
 
 
-def gfsep(targ1: SPICE_BODY, inframe1: str, targ2: SPICE_BODY, inframe2: str, abcorr: str, obsrvr: SPICE_BODY, relate: str, ref: float, adjust: float, step: float, start: datetime, end: datetime):
+def get_relative_pos(targ: SPICE_BODY, times: List[datetime], ref_frame: str, abcorr: str, obsrvr: SPICE_BODY) -> Dict[str, List]:
+    # Load necessary kernels
     lsk_loc = str(kernel_file(KernelType.LSK, None, "naif0012.tls.pc"))
     earth_fixed = str(kernel_file(KernelType.PCK, None, "earth_fixed.tf"))
 
@@ -461,40 +534,44 @@ def gfsep(targ1: SPICE_BODY, inframe1: str, targ2: SPICE_BODY, inframe2: str, ab
     earth.furnish_all_kernels()
     sp.furnsh(earth_fixed)
 
-    targ1.furnish_all_kernels()
-    targ2.furnish_all_kernels()
+    targ.furnish_all_kernels()
     obsrvr.furnish_all_kernels()
 
+    # Prepare lists to hold positions and light times
+    positions = []
+    light_times = []
 
-    et_start = sp.str2et(datetime_to_utc_string(start))
-    et_end   = sp.str2et(datetime_to_utc_string(end))
-    
-    intervals = 1000
-    nintvls = 2*intervals + ((et_end-et_start) / step)
-    cnfine = sp.utils.support_types.SPICE_DOUBLE_CELL(intervals)
-    sp.wninsd(et_start, et_end, cnfine)
+    # Loop over the list of times and get position and light time for each
+    for dt in times:
+        # Convert datetime to ephemeris time (ET)
+        et = sp.str2et(datetime_to_utc_string(dt))
 
-    result = sp.utils.support_types.SPICEDOUBLE_CELL(intervals)
+        # Get the position and light time
+        otp = sp.spkpos(
+            targ.naif_id,
+            et,
+            ref_frame,
+            abcorr,
+            obsrvr.naif_id
+        )
 
+        # Append the results to the lists
+        positions.append(otp[0])  # Position (3D vector)
+        light_times.append(otp[1])  # Light time (in seconds)
 
-    sp.gfsep(
-        targ1.naif_id,
-        "ELLIPSOID",
-        inframe1,
-        targ2.naif_id,
-        "ELLIPSOID",
-        inframe2,
-        abcorr,
-        obsrvr.naif_id,
-        relate,
-        refval,
-        adjust,
-        step,
-        nintvls,
-        cnfine,
-        result
-    )
-def find_occultations(occtyp, obsrvr: SPICE_BODY, front, fframe, back: SPICE_BODY, bframe, start: datetime, end: datetime):
+    # Unload kernels
+    sp.unload(lsk_loc)
+    sp.unload(earth_fixed)
+    targ.unload_all_kernels()
+    obsrvr.unload_all_kernels()
+
+    # Return the results as a dictionary
+    return {
+        "pos": positions,
+        "lt": light_times
+    }
+
+def find_occultations(occtyp, obsrvr: SPICE_BODY, front, fframe, back: SPICE_BODY, bframe, start: datetime, end: datetime, step: float):
     lsk_loc = str(kernel_file(KernelType.LSK, None, "naif0012.tls.pc"))
     earth_fixed = str(kernel_file(KernelType.PCK, None, "earth_fixed.tf"))
 
@@ -527,7 +604,7 @@ def find_occultations(occtyp, obsrvr: SPICE_BODY, front, fframe, back: SPICE_BOD
         bframe,
         'LT',
         obsrvr.naif_id,
-        60.0,
+        step,
         cnfine,
         result
     )
@@ -591,7 +668,7 @@ async def get_events(location: GeodeticLocation, start_time: datetime, end_time:
 
     conn = get_conn()
     site_name = create_site_or_fetch(location, conn)
-    occulations = handle_occultations(site_name, start_time, end_time)
+    occulations_obj = handle_occultations(site_name, start_time, end_time)
 
     dummy_event = EventItem(
         id="event_001",
@@ -602,6 +679,13 @@ async def get_events(location: GeodeticLocation, start_time: datetime, end_time:
     )
 
     return [dummy_event]
+
+
+async def get_occultations(location: GeodeticLocation, start_time: datetime, end_time: datetime, occulting_naif_id: str, occulted_naif_id: str) -> object:
+    conn = get_conn()
+    site_name = create_site_or_fetch(location, conn)
+    occultations_obj = handle_occultations(site_name, start_time, end_time)
+    return occultations_obj
 
 async def event_types():
     try:
