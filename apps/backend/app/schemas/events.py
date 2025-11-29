@@ -12,7 +12,7 @@ class EventSearchRequest(BaseModel):
     event_specific_criteria: List[EventCriteria]
 
 class OccultationSearchRequest(BaseModel):
-    loc: GeodeticLocation
+    location: GeodeticLocation
     start_time: datetime
     end_time: datetime
     occulting_naif_id: str

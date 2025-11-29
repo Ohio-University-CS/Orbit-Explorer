@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from app.services.spice_events import get_events, event_types
+from app.services.spice_events import get_events, event_types, get_occultations
 
 from app.schemas.event_item import EventItem
 from app.schemas.event_criteria import EventCriteria
 from app.schemas.location import GeodeticLocation
-from app.schemas.events import EventSearchRequest
+from app.schemas.events import EventSearchRequest, OccultationSearchRequest
 
 router = APIRouter()
 
@@ -24,7 +24,7 @@ async def event_search(req: EventSearchRequest) -> List[EventItem]:
 async def get_event_types():
     return await event_types()
 
-@router.get("/search/occultations")
+@router.post("/search/occultations")
 async def search_occ(req: OccultationSearchRequest) -> object:
     obj = await get_occultations(
         req.location,
