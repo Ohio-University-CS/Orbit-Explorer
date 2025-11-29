@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 
 from app.schemas.event_item import EventItem
@@ -21,6 +21,7 @@ import random
 import string
 from pathlib import Path
 from enum import Enum
+from typing import Optional
 APP_ROOT = Path(__file__).resolve().parent.parent
 
 # Database connection function
@@ -54,6 +55,7 @@ class ObjectType(Enum):
 
 SPICE_ROOT = APP_ROOT / "spice"
 SPICE_KERNELS_ROOT = SPICE_ROOT / "kernels"
+
 
 # Map KernelType + ObjectType to paths
 KERNEL_PATHS = {
@@ -90,6 +92,92 @@ class SPICE_MISC_DIRS():
 class SPICE_BINARIES:
     PINPOINT = SPICE_ROOT / "bin/PC_Linux_64bit/pinpoint"
 
+class SPICE_BODY:
+    def __init__(self, spk_file: Optional[Path] = None, pck_file: Optional[Path] = None, fk_file: Optional[Path] = None, naif_id: str = ""):
+        """
+        Initializes the SPICE_BODY instance with optional kernel files (SPK, PCK, FK).
+        
+        Args:
+            spk_file (Optional[Path]): Path to the SPK file.
+            pck_file (Optional[Path]): Path to the PCK file.
+            fk_file (Optional[Path]): Path to the FK file.
+            naif_id (str): NAIF ID for the body (used for identification purposes).
+        """
+        self.spk_file = spk_file
+        self.pck_file = pck_file
+        self.fk_file = fk_file
+        self.naif_id = naif_id
+
+    def furnsh_spk(self) -> None:
+        """
+        Furnish the SPK file if it exists.
+        """
+        if self.spk_file and self.spk_file.exists():
+            sp.furnsh(str(self.spk_file))
+        elif self.spk_file:
+            print(f"SPK file not found: {self.spk_file}")
+
+    def furnsh_pck(self) -> None:
+        """
+        Furnish the PCK file if it exists.
+        """
+        if self.pck_file and self.pck_file.exists():
+            sp.furnsh(str(self.pck_file))
+        elif self.pck_file:
+            print(f"PCK file not found: {self.pck_file}")
+
+    def furnsh_fk(self) -> None:
+        """
+        Furnish the FK file if it exists.
+        """
+        if self.fk_file and self.fk_file.exists():
+            sp.furnsh(str(self.fk_file))
+        elif self.fk_file:
+            print(f"FK file not found: {self.fk_file}")
+
+    def unload_spk(self) -> None:
+        """
+        Unload the SPK file if it was loaded.
+        """
+        if self.spk_file and self.spk_file.exists():
+            sp.unload(str(self.spk_file))
+        elif self.spk_file:
+            print(f"SPK file is not loaded or not found: {self.spk_file}")
+
+    def unload_pck(self) -> None:
+        """
+        Unload the PCK file if it was loaded.
+        """
+        if self.pck_file and self.pck_file.exists():
+            sp.unload(str(self.pck_file))
+        elif self.pck_file:
+            print(f"PCK file is not loaded or not found: {self.pck_file}")
+
+    def unload_fk(self) -> None:
+        """
+        Unload the FK file if it was loaded.
+        """
+        if self.fk_file and self.fk_file.exists():
+            sp.unload(str(self.fk_file))
+        elif self.fk_file:
+            print(f"FK file is not loaded or not found: {self.fk_file}")
+
+    def furnish_all_kernels(self) -> None:
+        """
+        Furnish all available kernels (SPK, PCK, FK) if they exist.
+        """
+        self.furnsh_spk()
+        self.furnsh_pck()
+        self.furnsh_fk()
+
+    def unload_all_kernels(self) -> None:
+        """
+        Unload all available kernels (SPK, PCK, FK) if they are loaded.
+        """
+        self.unload_spk()
+        self.unload_pck()
+        self.unload_fk()
+
 def kernel_file(kernel_type: KernelType, object_type: ObjectType | None, file_name: str):
     """
     Build a full kernel file path using enums.
@@ -102,6 +190,12 @@ def kernel_file(kernel_type: KernelType, object_type: ObjectType | None, file_na
     
     folder = KERNEL_PATHS[kernel_type][object_type]
     return folder / file_name
+
+earth = SPICE_BODY()
+earth.spk_file = kernel_file(KernelType.SPK, ObjectType.PLANET, "de432s.bsp")
+earth.pck_file = kernel_file(KernelType.PCK, None, "pck00011.tpc")
+earth.naif_id = "399"
+
 
 def geodetic_to_xyz(location: GeodeticLocation):
     """
@@ -118,7 +212,9 @@ def geodetic_to_xyz(location: GeodeticLocation):
     # Compute flattening
     f = (re - rp) / re
 
-    x, y, z = sp.georec(location.lon, location.lat, location.alt_km, re, f)
+    lat_rad = location.lat * np.pi/180
+    lon_rad = location.lon * np.pi/180
+    x, y, z = sp.georec(lon_rad, lat_rad, location.alt_km, re, f)
     return x, y, z
 
 def generate_site_guid(length=21):
@@ -187,7 +283,7 @@ def create_site_helper(guid, idcode, location):
     site = {
         "id": guid,
         "idcode": idcode,
-        "bounds": ("@2025-JAN-01", "@2300-JAN-01")
+        "bounds": ("@1000-JAN-01", "@3000-JAN-01")
     }
     site["x"], site["y"], site["z"] = geodetic_to_xyz(location)
 
@@ -209,16 +305,18 @@ def create_site_helper(guid, idcode, location):
         output_fk.unlink()
 
     cmd = [
-        str(pinpoint_path),
-        "-def", str(defs_path),
-        "-pck", str(pck_path),
-        "-spk", str(output_spk),
-        "-fk", str(output_fk)
+        str(pinpoint_path.resolve()),
+        "-def", str(defs_path.resolve()),
+        "-pck", str(pck_path.resolve()),
+        "-spk", str(output_spk.resolve()),
+        "-fk", str(output_fk.resolve())
     ]
 
     try:
         # Let pinpoint print directly to terminal
         result = subprocess.run(cmd, check=True)
+        print(result.stdout)
+        print(result.stderr)
     except subprocess.CalledProcessError as e:
         print(">>> PINPOINT FAILED! Return code:", e.returncode)
         raise
@@ -229,54 +327,190 @@ def create_site_helper(guid, idcode, location):
     if defs_path.exists():
         defs_path.unlink()
 
+
 def datetime_to_utc_string(dt: datetime) -> str:
     """
     Convert a datetime.datetime object to a CSPICE-compatible UTC string.
+    The format is 'YYYY-MM-DDTHH:MM:SS.SSSSSS UTC' (up to 6 decimal places).
     """
     if not isinstance(dt, datetime):
         raise TypeError(f"Expected datetime.datetime, got {type(dt)}")
-    return dt.strftime("%Y-%m-%dT%H:%M:%S")
+    
+    # Format the datetime object to include microseconds (up to 6 digits)
+    return dt.strftime("%Y-%m-%dT%H:%M:%S.") + f"{dt.microsecond:06d}"
 
+def handle_occultations(site_name: str, start_time: datetime, end_time: datetime):
+    moon = SPICE_BODY()
+    moon.spk_file = kernel_file(KernelType.SPK, ObjectType.PLANET, "de432s.bsp")
+    moon.pck_file = kernel_file(KernelType.PCK, None, "pck00011.tpc")
+    moon.naif_id = "301"
 
-def handle_occultations(site_name: str, start_time, end_time):
-    site_spk = kernel_file(KernelType.SPK, ObjectType.SITE, f"{site_name}.spk")
-    site_fk = kernel_file(KernelType.FK, ObjectType.SITE, f"{site_name}.tf")
+    site = SPICE_BODY()
+    site.spk_file = kernel_file(KernelType.SPK, ObjectType.SITE, f"{site_name}.spk")
+    site.fk_file = kernel_file(KernelType.FK, ObjectType.SITE, f"{site_name}.tf")
+    site.naif_id = site_name
+
+    sun = SPICE_BODY()
+    sun.spk_file = kernel_file(KernelType.SPK, ObjectType.PLANET, "de432s.bsp")
+    sun.pck_file = kernel_file(KernelType.PCK, None, "pck00011.tpc")
+    sun.naif_id = "10"
 
     occultations = find_occultations(
         "ANY",
-        observer_spk=str(site_spk),
-        observer_fk=str(site_fk),
-        obsrvr=site_name,
-        front='MOON',
+        obsrvr=site,
+        front=moon,
         fframe='IAU_MOON',
-        back='SUN',
+        back=sun,
         bframe='IAU_SUN',
-        start_utc='2026-09-24T00:00:00',
-        end_utc='2027-09-25T00:00:00'
+        start=start_time,
+        end=end_time,
     )
 
+    print("ANY OCCULTATIONS")
+    for start_dt, end_dt in occultations:
+        print(f"Start: {start_dt}, End: {end_dt}")
+
+
+    intervals = gfsep(
+        targ1=moon,
+        inframe1="IAU_MOON",
+        targ2=sun,
+        inframe2="IAU_SUN",
+        abcorr="NONE",
+        obsrvr=site,
+        relate="ABSMIN",
+        refval=0,
+        adjust=0,
+        step=60,
+        start=start_time,
+        end=end_time
+    )
+
+    occultations = find_occultations(
+        "FULL",
+        obsrvr=site,
+        front=moon,
+        fframe='IAU_MOON',
+        back=sun,
+        bframe='IAU_SUN',
+        start=start_time,
+        end=end_time,
+    )
+
+    print("FULL OCCULTATIONS")
+    for start_dt, end_dt in occultations:
+        print(f"Start: {start_dt}, End: {end_dt}")
+
+    occultations = find_occultations(
+        "PARTIAL",
+        obsrvr=site,
+        front=moon,
+        fframe='IAU_MOON',
+        back=sun,
+        bframe='IAU_SUN',
+        start=start_time,
+        end=end_time,
+    )
+
+
+    print("PARTIAL OCCULTATIONS")
+    for start_dt, end_dt in occultations:
+        print(f"Start: {start_dt}, End: {end_dt}")
+
+    occultations = find_occultations(
+        "ANNULAR",
+        obsrvr=site,
+        front=moon,
+        fframe='IAU_MOON',
+        back=sun,
+        bframe='IAU_SUN',
+        start=start_time,
+        end=end_time,
+    )
+
+
+    print("ANNULAR OCCULTATIONS")
+    for start_dt, end_dt in occultations:
+        print(f"Start: {start_dt}, End: {end_dt}")
+    n=15
+    delta_time = timedelta(seconds=n)
+    for start_dt, end_dt in occultations:
+        dt = start_dt  # Initialize dt with start time
+
+        # Loop through the time range with increments of delta_time
+        while dt <= end_dt:
+            phase_angle = calculate_phase_angle(dt, moon, sun, site)
+            print(f"PHASE ANGLE at {dt}: {phase_angle}")
+
+            # Increment dt by delta_time
+            dt = dt + delta_time
+
+        # After the loop, handle the last value of dt just before end_dt
+        if dt - delta_time < end_dt:
+            # Calculate the phase angle for the last time step before end_dt
+            phase_angle = calculate_phase_angle(dt - delta_time, moon, sun, site)
+            print(f"PHASE ANGLE at {dt - delta_time}: {phase_angle}")
     return occultations
 
-def find_occultations(occtyp, observer_spk, observer_fk, obsrvr , front, fframe, back, bframe, start_utc, end_utc):
-    # Load SPKs
 
+def gfsep(targ1: SPICE_BODY, inframe1: str, targ2: SPICE_BODY, inframe2: str, abcorr: str, obsrvr: SPICE_BODY, relate: str, ref: float, adjust: float, step: float, start: datetime, end: datetime):
     lsk_loc = str(kernel_file(KernelType.LSK, None, "naif0012.tls.pc"))
-    earth_loc = str(kernel_file(KernelType.PCK, None, "pck00011.tpc"))
-    planets_loc = str(kernel_file(KernelType.SPK, ObjectType.PLANET, "de432s.bsp"))
     earth_fixed = str(kernel_file(KernelType.PCK, None, "earth_fixed.tf"))
+
     sp.furnsh(lsk_loc)
-    sp.furnsh(earth_loc)
+    earth.furnish_all_kernels()
     sp.furnsh(earth_fixed)
-    sp.furnsh(planets_loc)
-    sp.furnsh(observer_spk)
-    sp.furnsh(observer_fk)
+
+    targ1.furnish_all_kernels()
+    targ2.furnish_all_kernels()
+    obsrvr.furnish_all_kernels()
+
+
+    et_start = sp.str2et(datetime_to_utc_string(start))
+    et_end   = sp.str2et(datetime_to_utc_string(end))
+    
+    intervals = 1000
+    nintvls = 2*intervals + ((et_end-et_start) / step)
+    cnfine = sp.utils.support_types.SPICE_DOUBLE_CELL(intervals)
+    sp.wninsd(et_start, et_end, cnfine)
+
+    result = sp.utils.support_types.SPICEDOUBLE_CELL(intervals)
+
+
+    sp.gfsep(
+        targ1.naif_id,
+        "ELLIPSOID",
+        inframe1,
+        targ2.naif_id,
+        "ELLIPSOID",
+        inframe2,
+        abcorr,
+        obsrvr.naif_id,
+        relate,
+        refval,
+        adjust,
+        step,
+        nintvls,
+        cnfine,
+        result
+    )
+def find_occultations(occtyp, obsrvr: SPICE_BODY, front, fframe, back: SPICE_BODY, bframe, start: datetime, end: datetime):
+    lsk_loc = str(kernel_file(KernelType.LSK, None, "naif0012.tls.pc"))
+    earth_fixed = str(kernel_file(KernelType.PCK, None, "earth_fixed.tf"))
+
+    sp.furnsh(lsk_loc)
+    earth.furnish_all_kernels()
+    sp.furnsh(earth_fixed)
+
+    back.furnish_all_kernels()
+    obsrvr.furnish_all_kernels()
 
     # Convert UTC to ephemeris seconds past J2000
-    et_start = sp.str2et(start_utc)
-    et_end   = sp.str2et(end_utc)
+    et_start = sp.str2et(datetime_to_utc_string(start))
+    et_end   = sp.str2et(datetime_to_utc_string(end))
     
     # Create confinement window
-    cnfine = sp.utils.support_types.SPICEDOUBLE_CELL(2)
+    cnfine = sp.utils.support_types.SPICEDOUBLE_CELL(1000)
     sp.wninsd(et_start, et_end, cnfine)
 
     # Result window
@@ -285,14 +519,14 @@ def find_occultations(occtyp, observer_spk, observer_fk, obsrvr , front, fframe,
     # Call the occultation finder
     sp.gfoclt(
         occtyp,
-        front,
+        front.naif_id,
         'ELLIPSOID',
         fframe,
-        back,
+        back.naif_id,
         'ELLIPSOID',
         bframe,
         'LT',
-        obsrvr,
+        obsrvr.naif_id,
         60.0,
         cnfine,
         result
@@ -304,16 +538,53 @@ def find_occultations(occtyp, observer_spk, observer_fk, obsrvr , front, fframe,
     for i in range(n):
         start, end = sp.wnfetd(result, i)
         # convert back to UTC
-        start_utc = sp.et2utc(start, 'C', 0)
-        end_utc   = sp.et2utc(end, 'C', 0)
-        intervals.append((start_utc, end_utc))
-    
-    # Clean up
-    sp.unload(observer_spk)
-    
-    print("interrvals:------")
-    print(intervals)
+        start_utc = sp.et2utc(start, 'C', 6) #max is 14, datetime only supports 6
+        end_utc   = sp.et2utc(end, 'C', 6)
+        start_dt  = datetime.strptime(start_utc, "%Y %b %d %H:%M:%S.%f")
+        end_dt    = datetime.strptime(end_utc, "%Y %b %d %H:%M:%S.%f")
+        intervals.append((start_dt, end_dt))
+
+    sp.unload(lsk_loc)
+    sp.unload(earth_fixed)
+    back.unload_all_kernels()
+    earth.unload_all_kernels()
+    obsrvr.unload_all_kernels()
+
     return intervals
+
+
+def calculate_phase_angle(dt: datetime, target: SPICE_BODY, illmn: SPICE_BODY, obsrvr: SPICE_BODY):
+
+    lsk_loc = str(kernel_file(KernelType.LSK, None, "naif0012.tls.pc"))
+    earth_fixed = str(kernel_file(KernelType.PCK, None, "earth_fixed.tf"))
+
+    sp.furnsh(lsk_loc)
+    sp.furnsh(earth_fixed)
+
+    target.furnish_all_kernels()
+    illmn.furnish_all_kernels()
+    earth.furnish_all_kernels()
+    obsrvr.furnish_all_kernels()
+
+    et = sp.str2et(datetime_to_utc_string(dt))
+
+    abcorr = "LT+S"
+    angle = sp.phaseq(
+        et,
+        target.naif_id,
+        illmn.naif_id,
+        obsrvr.naif_id,
+        abcorr
+    )
+
+    sp.unload(lsk_loc)
+    sp.unload(earth_fixed)
+    target.unload_all_kernels()
+    illmn.unload_all_kernels()
+    earth.unload_all_kernels()
+    obsrvr.unload_all_kernels()
+
+    return angle
 
 async def get_events(location: GeodeticLocation, start_time: datetime, end_time: datetime, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
     events = []
