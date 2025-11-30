@@ -378,11 +378,6 @@ def handle_occultations(site_name: str, start_time: datetime, end_time: datetime
     print("ANY OCCULTATIONS")
     for start_dt, end_dt in occultations_ANY:
         print(f"Start: {start_dt}, End: {end_dt}")
-        occultation_res = {
-            "start_utc": start_dt,
-            "end_utc": end_dt,
-            "computational_data": {},
-        }
 
         occultations = find_occultations(
             "FULL",
@@ -437,8 +432,8 @@ def handle_occultations(site_name: str, start_time: datetime, end_time: datetime
     n=15
     delta_time = timedelta(seconds=n)
 
-    times = []
     for start_dt, end_dt in occultations_ANY:
+        times = []
         dt = start_dt  # Initialize dt with start time
 
         while dt <= end_dt:
@@ -448,65 +443,71 @@ def handle_occultations(site_name: str, start_time: datetime, end_time: datetime
             times.append(end_dt)
 
 
-    occulting_relpos = get_relative_pos(
-        targ=moon,
-        times=times,
-        ref_frame="J2000",
-        abcorr="NONE",
-        obsrvr=site
-    )
+        occultation_res = {
+            "start_utc": start_dt,
+            "end_utc": end_dt,
+            "computational_data": {},
+        }
 
-    occulted_relpos = get_relative_pos(
-        targ=sun,
-        times=times,
-        ref_frame="J2000",
-        abcorr="NONE",
-        obsrvr=site
-    )
+        occulting_relpos = get_relative_pos(
+            targ=moon,
+            times=times,
+            ref_frame="J2000",
+            abcorr="NONE",
+            obsrvr=site
+        )
 
-
-    occulting_rngs_list = []
-    occulting_azs_list = []
-    occulting_els_list = []
-
-    occulted_rngs_list = []
-    occulted_azs_list = []
-    occulted_els_list = []
+        occulted_relpos = get_relative_pos(
+            targ=sun,
+            times=times,
+            ref_frame="J2000",
+            abcorr="NONE",
+            obsrvr=site
+        )
 
 
-    for pos in occulting_relpos["pos"]:
-        occulting_rng, occulting_az, occulting_el = sp.recazl(pos, True, True)
-        occulting_rngs_list.append(occulting_rng)
-        occulting_azs_list.append(occulting_az)
-        occulting_els_list.append(occulting_el)
+        occulting_rngs_list = []
+        occulting_azs_list = []
+        occulting_els_list = []
 
-    for pos in occulted_relpos["pos"]:
-        occulted_rng, occulted_az, occulted_el = sp.recazl(pos, True, True)
-        occulted_rngs_list.append(occulted_rng)
-        occulted_azs_list.append(occulted_az)
-        occulted_els_list.append(occulted_el)
+        occulted_rngs_list = []
+        occulted_azs_list = []
+        occulted_els_list = []
 
 
-    occultation_res["computational_data"]["sample_times"] = times
-    occultation_res["computational_data"]["occulting_dist"] = occulting_rng
-    occultation_res["computational_data"]["occulting_azimuths"] = occulting_azs
-    occultation_res["computational_data"]["occulting_elevations"] = occulting_els
+        for pos in occulting_relpos["pos"]:
+            occulting_rng, occulting_az, occulting_el = sp.recazl(pos, True, True)
+            occulting_rngs_list.append(occulting_rng)
+            occulting_azs_list.append(occulting_az)
+            occulting_els_list.append(occulting_el)
 
-    occultation_res["computational_data"]["occulted_dist"] = occulted_rng
-    occultation_res["computational_data"]["occulted_azimuths"] = occulted_azs
-    occultation_res["computational_data"]["occulted_elevations"] = occulted_els
+        for pos in occulted_relpos["pos"]:
+            occulted_rng, occulted_az, occulted_el = sp.recazl(pos, True, True)
+            occulted_rngs_list.append(occulted_rng)
+            occulted_azs_list.append(occulted_az)
+            occulted_els_list.append(occulted_el)
 
-    response["occultations"].append(occultation_res)
-    # Convert the lists to NumPy arrays
-    occulting_rngs = np.array(occulting_rngs_list)
-    occulting_azs = np.array(occulting_azs_list)
-    occulting_els = np.array(occulting_els_list)
 
-    occulted_rngs = np.array(occulted_rngs_list)
-    occulted_azs = np.array(occulted_azs_list)
-    occulted_els = np.array(occulted_els_list)
+        occultation_res["computational_data"]["sample_times"] = times
+        occultation_res["computational_data"]["occulting_dist"] = occulting_rngs_list
+        occultation_res["computational_data"]["occulting_azimuths"] = occulting_azs_list
+        occultation_res["computational_data"]["occulting_elevations"] = occulting_els_list
 
-    for start_dt, end_dt in occultations:
+        occultation_res["computational_data"]["occulted_dist"] = occulted_rngs_list
+        occultation_res["computational_data"]["occulted_azimuths"] = occulted_azs_list
+        occultation_res["computational_data"]["occulted_elevations"] = occulted_els_list
+
+        response["occultations"].append(occultation_res)
+        # Convert the lists to NumPy arrays
+        occulting_rngs = np.array(occulting_rngs_list)
+        occulting_azs = np.array(occulting_azs_list)
+        occulting_els = np.array(occulting_els_list)
+
+        occulted_rngs = np.array(occulted_rngs_list)
+        occulted_azs = np.array(occulted_azs_list)
+        occulted_els = np.array(occulted_els_list)
+
+    for start_dt, end_dt in []:
         dt = start_dt  # Initialize dt with start time
 
 
@@ -537,11 +538,9 @@ def get_relative_pos(targ: SPICE_BODY, times: List[datetime], ref_frame: str, ab
     targ.furnish_all_kernels()
     obsrvr.furnish_all_kernels()
 
-    # Prepare lists to hold positions and light times
     positions = []
     light_times = []
 
-    # Loop over the list of times and get position and light time for each
     for dt in times:
         # Convert datetime to ephemeris time (ET)
         et = sp.str2et(datetime_to_utc_string(dt))
@@ -555,17 +554,14 @@ def get_relative_pos(targ: SPICE_BODY, times: List[datetime], ref_frame: str, ab
             obsrvr.naif_id
         )
 
-        # Append the results to the lists
-        positions.append(otp[0])  # Position (3D vector)
-        light_times.append(otp[1])  # Light time (in seconds)
+        positions.append(otp[0]) 
+        light_times.append(otp[1])
 
-    # Unload kernels
     sp.unload(lsk_loc)
     sp.unload(earth_fixed)
     targ.unload_all_kernels()
     obsrvr.unload_all_kernels()
 
-    # Return the results as a dictionary
     return {
         "pos": positions,
         "lt": light_times
