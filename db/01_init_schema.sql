@@ -30,3 +30,12 @@ CREATE TABLE IF NOT EXISTS sites (
     ),
     UNIQUE (lat, lon, alt_km)           -- unique coordinates
 );
+
+CREATE TABLE IF NOT EXISTS bodies (
+    id SERIAL PRIMARY KEY,
+    naif_id TEXT UNIQUE NOT NULL,
+    body_type TEXT NOT NULL CHECK (
+        body_type IN ('planet', 'moon', 'asteroid', 'comet', 'spacecraft', 'site', 'barycenter')
+    ),
+    body_desc TEXT,
+);

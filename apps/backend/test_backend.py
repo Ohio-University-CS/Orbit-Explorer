@@ -4,7 +4,14 @@ from app.schemas.location import GeodeticLocation
 from app.schemas.event_criteria import EventCriteria
 from app.schemas.event_item import EventItem
 
-from app.services.spice_events import create_site_helper, handle_occultations, generate_site_guid, calculate_phase_angle
+from app.services.spice_events import (
+    create_site_helper,
+    handle_occultations,
+    generate_site_guid,
+    calculate_phase_angle,
+    l_observational_attributes,
+    populate_bodies_table
+)
 from datetime import datetime
 
 
@@ -37,12 +44,18 @@ start_time = datetime(2026, 1, 1)
 end_time   = datetime(2026, 11, 11)
 
 async def main():
-    guid = generate_site_guid(21)
-    create_site_helper(guid, 399901, location)
+    #guid = generate_site_guid(21)
+    #create_site_helper(guid, 399901, location)
     #site = "GC87F937ACA4E436C8177"
-    site=guid
-    handle_occultations(site, start_time, end_time)
+    #site=guid
+    #handle_occultations(site, start_time, end_time)
+    x = l_observational_attributes(
+        "BB51151016A394455ACFC",
+        start_time,
+        "SUN"
+    )
 
+    x = await populate_bodies_table()
 # Run the async main function
 if __name__ == "__main__":
     asyncio.run(main())

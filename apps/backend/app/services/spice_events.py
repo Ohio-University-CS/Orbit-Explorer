@@ -14,6 +14,7 @@ import psycopg2
 import spiceypy as sp
 import numpy as np
 
+import math
 import subprocess
 import os
 import uuid
@@ -94,7 +95,7 @@ class SPICE_MISC_DIRS():
     TEMP = APP_ROOT / "spice/temp"
 
 class SPICE_BINARIES:
-    PINPOINT = SPICE_ROOT / "bin/PC_Linux_64bit/pinpoint"
+    PINPOINT = SPICE_ROOT / "bin/PC_Windows_64bit/pinpoint.exe"
 
 class SPICE_BODY:
     def __init__(self, spk_file: Optional[Path] = None, pck_file: Optional[Path] = None, fk_file: Optional[Path] = None, naif_id: str = ""):
@@ -200,7 +201,6 @@ earth.spk_file = kernel_file(KernelType.SPK, ObjectType.PLANET, "de432s.bsp")
 earth.pck_file = kernel_file(KernelType.PCK, None, "pck00011.tpc")
 earth.naif_id = "399"
 
-
 def geodetic_to_xyz(location: GeodeticLocation):
     """
     Convert geodetic coordinates (WGS84) to Earth-centered, Earth-fixed XYZ in km.
@@ -279,6 +279,44 @@ def create_site_or_fetch(location: GeodeticLocation, conn: psycopg2.extensions.c
     #mainly for testing, so it's seperate from database
     create_site_helper(guid, idcode, location)
     return guid
+
+def is_earth_blocking(obs_pos, target_pos, earth_radius=6378.1):
+    """
+    Determine if the Earth physically blocks the line of sight from an observer to a target.
+
+    Parameters:
+    -----------
+    obs_pos : array-like
+        Observer position vector in geocentric coordinates (km)
+    target_pos : array-like
+        Target position vector in the same geocentric frame (km)
+    earth_radius : float
+        Radius of the Earth in km (default: 6378.1 km)
+
+    Returns:
+    --------
+    blocked : bool
+        True if Earth is between the observer and target, False otherwise
+    """
+    obs_pos = np.array(obs_pos)
+    target_pos = np.array(target_pos)
+
+    # Vector from observer to target
+    obs_to_target = target_pos - obs_pos
+    dist_to_target = np.linalg.norm(obs_to_target)
+
+    # Vector from observer to Earth center
+    obs_to_earth = -obs_pos
+    dist_to_earth_center = np.linalg.norm(obs_to_earth)
+
+    # Compute perpendicular distance from Earth center to line-of-sight
+    obs_to_target_unit = obs_to_target / dist_to_target
+    closest_dist = np.linalg.norm(np.cross(obs_to_target, obs_to_earth)) / dist_to_target
+
+    # Earth blocks if closest approach is smaller than Earth's radius AND target is farther than observer distance to Earth's center
+    blocked = (closest_dist < earth_radius) and (dist_to_target > dist_to_earth_center)
+
+    return blocked
 
 def create_site_helper(guid, idcode, location):
     # ------------------------
@@ -659,6 +697,77 @@ def calculate_phase_angle(dt: datetime, target: SPICE_BODY, illmn: SPICE_BODY, o
 
     return angle
 
+
+def l_observational_attributes(site_name: str, dt: datetime, body_naif_id: str) -> object:
+    """
+        dict : {
+            'ra': Right Ascension in rad,
+            'dec': Declination in rad,
+            'distance': Distance in km,
+            'azimuth': Azimuth in rad,
+            'altitude': Altitude/Elevation in rad
+        }
+    """
+    site = SPICE_BODY()
+    site.spk_file = kernel_file(KernelType.SPK, ObjectType.SITE, f"{site_name}.spk")
+    site.fk_file = kernel_file(KernelType.FK, ObjectType.SITE, f"{site_name}.tf")
+    site.naif_id = site_name
+
+
+    body = SPICE_BODY()
+    body.spk_file = kernel_file(KernelType.SPK, ObjectType.PLANET, "de432s.bsp")
+    body.pck_file = kernel_file(KernelType.PCK, None, "pck00011.tpc")
+    body.naif_id = "301"
+
+    lsk_loc = str(kernel_file(KernelType.LSK, None, "naif0012.tls.pc"))
+    earth_fixed = str(kernel_file(KernelType.PCK, None, "earth_fixed.tf"))
+
+    sp.furnsh(lsk_loc)
+    sp.furnsh(earth_fixed)
+    site.furnish_all_kernels()
+    body.furnish_all_kernels()
+
+    et = sp.str2et(datetime_to_utc_string(dt))
+    
+    pos, lt1 = sp.spkpos(
+        body.naif_id,
+        et,
+        "J2000",
+        "LT+S",
+        site.naif_id,
+    )
+
+    r, ra, dec = sp.recrad(pos)  # r in km, lon=RA, lat=Dec in radians
+
+    dist, az, el = sp.recazl(pos, True, True)
+
+    visible = el > 0  # True if above horizon
+
+    obs_pos, _ = sp.spkpos(site.naif_id, et, "J2000", "NONE", "399")
+    earth_blocked = is_earth_blocking(obs_pos, pos)
+    print(f"Earth blocking?: {earth_blocked}")
+    sp.unload(lsk_loc)
+    sp.unload(earth_fixed)
+    site.unload_all_kernels()
+    body.unload_all_kernels()
+
+
+    obj = {
+        'ra_rad': ra,
+        'dec_rad': dec,
+        'distance_km': dist,
+        'az_rad': az,
+        'alt_rad': el,
+        'visible': visible,
+        'ra_deg': math.degrees(ra),
+        'dec_deg': math.degrees(dec),
+        'az_deg': math.degrees(az),
+        'alt_deg': math.degrees(el),
+    }
+    print(obj)
+
+    return obj
+
 async def get_events(location: GeodeticLocation, start_time: datetime, end_time: datetime, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
     events = []
 
@@ -676,6 +785,18 @@ async def get_events(location: GeodeticLocation, start_time: datetime, end_time:
 
     return [dummy_event]
 
+async def populate_bodies_table():
+    return {}
+
+async def get_observational_attributes(
+    location: GeodeticLocation,
+    dt: datetime,
+    body_naif_id: str
+) -> object:
+    conn = get_conn()
+    site_name = create_site_or_fetch(location, conn)
+    observational_attributes = l_observational_attributes(site_name, dt, body_naif_id)
+    return observational_attributes
 
 async def get_occultations(location: GeodeticLocation, start_time: datetime, end_time: datetime, occulting_naif_id: str, occulted_naif_id: str) -> object:
     conn = get_conn()

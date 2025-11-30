@@ -17,3 +17,8 @@ class OccultationSearchRequest(BaseModel):
     end_time: datetime
     occulting_naif_id: str
     occulted_naif_id: str
+
+class ObserveBodyRequest(BaseModel):
+    location: GeodeticLocation
+    dt: datetime
+    body_naif_id: str

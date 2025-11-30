@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from app.services.spice_events import get_events, event_types, get_occultations
+from app.services.spice_events import get_events, event_types, get_occultations, get_observational_attributes
 
 from app.schemas.event_item import EventItem
 from app.schemas.event_criteria import EventCriteria
 from app.schemas.location import GeodeticLocation
-from app.schemas.events import EventSearchRequest, OccultationSearchRequest
+from app.schemas.events import EventSearchRequest, OccultationSearchRequest, ObserveBodyRequest
 
 router = APIRouter()
 
@@ -32,6 +32,16 @@ async def search_occ(req: OccultationSearchRequest) -> object:
         req.end_time,
         req.occulting_naif_id,
         req.occulted_naif_id,
+    )
+
+    return obj
+
+@router.post("/observe")
+async def observe_body(req: ObserveBodyRequest) -> object:
+    obj = await get_observational_attributes(
+        req.location,
+        req.dt,
+        req.body_naif_id
     )
 
     return obj
