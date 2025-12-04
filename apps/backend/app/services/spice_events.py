@@ -95,7 +95,7 @@ class SPICE_MISC_DIRS():
     TEMP = APP_ROOT / "spice/temp"
 
 class SPICE_BINARIES:
-    PINPOINT = SPICE_ROOT / "bin/PC_Windows_64bit/pinpoint.exe"
+    PINPOINT = SPICE_ROOT / "bin/PC_Linux_64bit/pinpoint"
 
 class SPICE_BODY:
     def __init__(self, spk_file: Optional[Path] = None, pck_file: Optional[Path] = None, fk_file: Optional[Path] = None, naif_id: str = ""):
