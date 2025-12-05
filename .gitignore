@@ -7,3 +7,6 @@ dist
 dist-ssr
 *.local
 .next
+apps/backend/calculations/venv/
+node_modules/
+apps/backend/venv/
