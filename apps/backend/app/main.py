@@ -1,10 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from typing import List
-import psycopg2
-from passlib.context import CryptContext
+from fastapi import FastAPI
+from app.api import user_router, event_router, auth_router
 
-from app.astro_lib.events import *
+app = FastAPI(title="Orbit-Explorer API")
 
 app = FastAPI()
 
@@ -117,3 +114,10 @@ def get_conn():
         user="postgres",
         password="123456"
     )
+=======
+# Register routers
+app.include_router(user_router, prefix="/users", tags=["users"])
+app.include_router(event_router, prefix="/events", tags=["events"])
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+
+
