@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE =
   (typeof import.meta !== "undefined" &&
@@ -7,76 +8,55 @@ const API_BASE =
   process.env.REACT_APP_API_BASE ||
   "http://localhost:8000";
 
-// COLOR PALETTE: ORANGE + BLACK + WHITE
-const COLORS = {
-  background: "#000000",
-  card: "#080808",
-  cardBorder: "#ff8a1e",
-  text: "#ffffff",
-  textMuted: "#e0e0e0",
-  headingMuted: "#ffb347",
-  orange: "#ff8a1e",
-  orangeSoft: "#ffb347",
-  sectionBg: "#101010",
-  inputBg: "#ffffff",
-  inputBorder: "#555555",
-};
-
-// FULL-PAGE WRAPPER
+// FULL-WIDTH PAGE, BLACK BACKGROUND
 const pageStyle = {
   minHeight: "100vh",
-  backgroundColor: COLORS.background,
-  color: COLORS.text,
-  fontFamily:
-    "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  background: "#000",
+  color: "#fff",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "flex-start",
+  padding: "40px 16px",
+  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
 };
 
-// MAIN SHELL (NOW FULL WIDTH)
 const shellStyle = {
-  minHeight: "100vh",
   width: "100%",
-  maxWidth: "100%",
-  margin: 0,
-  padding: "32px 40px 40px",
-  boxSizing: "border-box",
-  backgroundColor: COLORS.card,
-  borderRadius: 0,
-  border: `2px solid ${COLORS.cardBorder}`,
+  maxWidth: "1120px",
+  background: "#050505",
+  borderRadius: "24px",
+  padding: "28px 24px 32px",
+  boxShadow: "0 0 40px rgba(0,0,0,0.85)",
+  border: "1px solid #ff9d2b",
 };
 
-// SECTIONS
 const sectionStyle = {
   marginTop: "20px",
   padding: "18px 18px 20px",
   borderRadius: "16px",
-  backgroundColor: COLORS.sectionBg,
-  border: `1px solid ${COLORS.inputBorder}`,
+  background: "#0c0c0c",
+  border: "1px solid #ff9d2b4d",
 };
 
-const sectionHeaderStyle = {
-  fontSize: "13px",
-  opacity: 0.95,
-  marginBottom: "6px",
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: COLORS.headingMuted,
-};
-
-// FORM
 const labelStyle = {
   display: "block",
   fontSize: "13px",
   marginBottom: "4px",
-  color: COLORS.text,
+  color: "#ffffff",
+};
+
+const hintText = {
+  fontSize: "12px",
+  color: "#f7f7f7",
 };
 
 const inputStyle = {
   width: "100%",
   padding: "10px 12px",
   borderRadius: "10px",
-  border: `1px solid ${COLORS.inputBorder}`,
-  backgroundColor: COLORS.inputBg,
-  color: "#111111",
+  border: "1px solid #ffb13d",
+  background: "#050505",
+  color: "#ffffff",
   fontSize: "14px",
   outline: "none",
 };
@@ -89,51 +69,55 @@ const chipRowStyle = {
 };
 
 const chipStyle = (active) => ({
-  padding: "6px 11px",
+  padding: "6px 10px",
   borderRadius: "999px",
-  border: active
-    ? `1px solid ${COLORS.orangeSoft}`
-    : `1px solid ${COLORS.orangeSoft}99`,
-  backgroundColor: active ? COLORS.orange : "transparent",
-  color: active ? "#000000" : COLORS.text,
+  border: active ? "1px solid #ffb13d" : "1px solid #ffb13d80",
+  background: active ? "#ff9d2b" : "#111",
+  color: active ? "#000" : "#ffffff",
   fontSize: "12px",
   cursor: "pointer",
 });
 
-// BUTTONS
 const primaryButtonStyle = {
   marginTop: "18px",
   width: "100%",
   padding: "16px 0",
   borderRadius: "999px",
   border: "none",
-  backgroundColor: COLORS.orange,
-  color: "#000000",
+  background: "#ff9d2b",
+  color: "#000",
   fontWeight: 700,
   letterSpacing: "0.08em",
   textTransform: "uppercase",
   fontSize: "14px",
   cursor: "pointer",
-  boxShadow: "0 10px 20px rgba(0,0,0,0.7)",
+  boxShadow: "0 10px 20px rgba(0,0,0,0.9)",
 };
 
-const primaryButtonDisabledStyle = {
-  ...primaryButtonStyle,
-  opacity: 0.65,
-  cursor: "default",
-};
-
-// RESULTS
 const resultCardStyle = {
   marginTop: "10px",
   padding: "10px 12px",
   borderRadius: "12px",
-  backgroundColor: "#141414",
-  border: `1px solid ${COLORS.inputBorder}`,
+  background: "#050505",
+  border: "1px solid #ffb13d80",
   fontSize: "13px",
 };
 
+const viewButtonStyle = {
+  marginTop: "8px",
+  padding: "6px 12px",
+  borderRadius: "999px",
+  border: "none",
+  background: "#ffffff",
+  color: "#000",
+  fontSize: "12px",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
 export default function OccultationSearch() {
+  const navigate = useNavigate();
+
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [lat, setLat] = useState("");
@@ -188,22 +172,13 @@ export default function OccultationSearch() {
 
   const toggleType = (name) => {
     setSelectedTypes((prev) =>
-      prev.includes(name)
-        ? prev.filter((t) => t !== name)
-        : [...prev, name]
+      prev.includes(name) ? prev.filter((t) => t !== name) : [...prev, name]
     );
   };
 
   const updateCriterion = (index, field, value) => {
     setCriteria((prev) =>
-      prev.map((c, i) =>
-        i === index
-          ? {
-              ...c,
-              [field]: value,
-            }
-          : c
-      )
+      prev.map((c, i) => (i === index ? { ...c, [field]: value } : c))
     );
   };
 
@@ -268,31 +243,34 @@ export default function OccultationSearch() {
     }
   };
 
+  const openVisualization = (event) => {
+    navigate("/visualize", { state: { event } });
+  };
+
   return (
     <div style={pageStyle}>
       <div style={shellStyle}>
-        <h1
-          style={{
-            fontSize: "28px",
-            marginBottom: "4px",
-            color: COLORS.orange,
-          }}
-        >
+        <h1 style={{ fontSize: "28px", marginBottom: "4px", color: "#ffffff" }}>
           Occultation Search
         </h1>
-        <p
-          style={{
-            fontSize: "13px",
-            color: COLORS.textMuted,
-            marginBottom: "8px",
-          }}
-        >
+        <p style={{ fontSize: "13px", color: "#f7f7f7", marginBottom: "8px" }}>
           Choose a time window, observer location, and event types, then search.
         </p>
 
         {/* 1. Time window */}
         <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>1 · Time Window (Local / EST)</div>
+          <div
+            style={{
+              fontSize: "13px",
+              opacity: 0.9,
+              marginBottom: "6px",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#ff9d2b",
+            }}
+          >
+            1 · Time Window (Local / EST)
+          </div>
 
           <div
             style={{
@@ -324,7 +302,18 @@ export default function OccultationSearch() {
 
         {/* 2. Observer location */}
         <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>2 · Observer Location</div>
+          <div
+            style={{
+              fontSize: "13px",
+              opacity: 0.9,
+              marginBottom: "6px",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#ff9d2b",
+            }}
+          >
+            2 · Observer Location
+          </div>
 
           <div
             style={{
@@ -368,25 +357,27 @@ export default function OccultationSearch() {
 
         {/* 3. Event types */}
         <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>3 · Event Types</div>
-          <p
+          <div
             style={{
-              fontSize: "12px",
-              color: COLORS.textMuted,
+              fontSize: "13px",
+              opacity: 0.9,
               marginBottom: "6px",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#ff9d2b",
             }}
           >
-            Select which event types to include in the search.
+            3 · Event Types
+          </div>
+          <p style={hintText}>
+            These names come directly from the{" "}
+            <code style={{ color: "#ffffff" }}>celestial_event_types</code>{" "}
+            table.
           </p>
 
           <div style={chipRowStyle}>
             {availableTypes.length === 0 && (
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: "#ff8080",
-                }}
-              >
+              <span style={{ fontSize: "12px", color: "#ff8080" }}>
                 Could not load event types.
               </span>
             )}
@@ -405,15 +396,21 @@ export default function OccultationSearch() {
 
         {/* 4. Optional criteria */}
         <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>4 · Optional Criteria</div>
+          <div
+            style={{
+              fontSize: "13px",
+              opacity: 0.9,
+              marginBottom: "6px",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#ff9d2b",
+            }}
+          >
+            4 · Optional Criteria
+          </div>
 
           {criteria.map((c, idx) => (
-            <div
-              key={idx}
-              style={{
-                marginTop: idx === 0 ? 0 : 10,
-              }}
-            >
+            <div key={idx} style={{ marginTop: idx === 0 ? 0 : 10 }}>
               <label style={labelStyle}>Criteria name</label>
               <input
                 type="text"
@@ -424,14 +421,7 @@ export default function OccultationSearch() {
                 style={inputStyle}
                 placeholder="e.g. occultation_depth"
               />
-              <label
-                style={{
-                  ...labelStyle,
-                  marginTop: 8,
-                }}
-              >
-                Description
-              </label>
+              <label style={{ ...labelStyle, marginTop: 8 }}>Description</label>
               <textarea
                 value={c.description}
                 onChange={(e) =>
@@ -454,9 +444,9 @@ export default function OccultationSearch() {
               marginTop: "10px",
               padding: "6px 12px",
               borderRadius: "999px",
-              border: `1px solid ${COLORS.orangeSoft}`,
-              backgroundColor: "transparent",
-              color: COLORS.textMuted,
+              border: "1px solid #ffb13d",
+              background: "#111",
+              color: "#ffffff",
               fontSize: "12px",
               cursor: "pointer",
             }}
@@ -465,13 +455,7 @@ export default function OccultationSearch() {
           </button>
 
           {errorText && (
-            <p
-              style={{
-                marginTop: 10,
-                fontSize: 12,
-                color: "#ff8080",
-              }}
-            >
+            <p style={{ marginTop: 10, fontSize: 12, color: "#ff8080" }}>
               {errorText}
             </p>
           )}
@@ -481,7 +465,7 @@ export default function OccultationSearch() {
         <button
           type="button"
           onClick={onSearch}
-          style={loading ? primaryButtonDisabledStyle : primaryButtonStyle}
+          style={primaryButtonStyle}
           disabled={loading}
         >
           {loading ? "Searching..." : "Search Occultations"}
@@ -489,58 +473,59 @@ export default function OccultationSearch() {
 
         {/* 5. Results */}
         <section style={sectionStyle}>
-          <div style={sectionHeaderStyle}>5 · Results</div>
+          <div
+            style={{
+              fontSize: "13px",
+              opacity: 0.9,
+              marginBottom: "6px",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              color: "#ff9d2b",
+            }}
+          >
+            5 · Results
+          </div>
 
           {results.length === 0 && !loading && (
-            <p
-              style={{
-                fontSize: "12px",
-                color: COLORS.textMuted,
-              }}
-            >
-              No events returned yet.
-            </p>
+            <p style={hintText}>No events returned yet.</p>
           )}
 
           {results.map((ev) => (
             <div key={ev.id} style={resultCardStyle}>
-              <div
-                style={{
-                  fontWeight: 600,
-                  marginBottom: 2,
-                  color: COLORS.orangeSoft,
-                }}
-              >
+              <div style={{ fontWeight: 600, marginBottom: 2, color: "#fff" }}>
                 {ev.name || ev.type || ev.id}
               </div>
               <div
                 style={{
                   fontSize: 12,
-                  color: COLORS.textMuted,
+                  color: "#f7f7f7",
                   marginBottom: 2,
                 }}
               >
                 Type: {ev.type}
               </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#d8c7b5",
-                }}
-              >
+              <div style={{ fontSize: 12, color: "#d8d8d8" }}>
                 Time: {ev.time ? new Date(ev.time).toString() : "—"}
               </div>
               {ev.desc && (
                 <div
                   style={{
                     fontSize: 12,
-                    color: "#f0f0f0",
+                    color: "#ffffff",
                     marginTop: 2,
                   }}
                 >
                   {ev.desc}
                 </div>
               )}
+
+              <button
+                type="button"
+                style={viewButtonStyle}
+                onClick={() => openVisualization(ev)}
+              >
+                View 3D Visualization
+              </button>
             </div>
           ))}
         </section>

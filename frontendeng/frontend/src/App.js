@@ -1,84 +1,120 @@
 // frontendeng/frontend/src/App.js
-import React from 'react';
-import styled from 'styled-components';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import Main from './components/Main';
-import Login from './Login';
-import Signup from './Signup';
-import OccultationSearch from './OccultationSearch.jsx';
+import React from "react";
+import styled from "styled-components";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 
+import Main from "./components/Main";             // animated background
+import Login from "./Login";
+import Signup from "./Signup";
+import OccultationSearch from "./OccultationSearch";
+import EventVisualization from "./EventVisualization";
+
+// Orange / black button style
 const Button = styled.button`
-  background-color: #FF964F;
-  color: white;
+  background-color: #ff964f;
+  color: #ffffff;
   width: 250px;
   padding: 20px 0;
   font-size: 24px;
   border-radius: 10px;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-  transition: all 250ms ease;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+  transition: all 200ms ease;
   border: none;
 
   &:hover {
-    background-color: black;
+    background-color: #000000;
+    color: #ff964f;
     transform: scale(1.05);
   }
 `;
 
-// Loading / landing screen with video + buttons
-function LoadingScreen() {
+// Landing screen = Main background + login/signup/explore buttons
+function LandingScreen() {
   const navigate = useNavigate();
 
   return (
-    <div style={{ position: 'relative', height: '100vh', width: '100%' }}>
-      {/* Fullscreen background (loading screen) */}
+    <div
+      style={{
+        position: "relative",
+        height: "100vh",
+        width: "100%",
+        overflow: "hidden",
+      }}
+    >
+      {/* Animated background */}
       <Main />
 
-      {/* Button overlay */}
+      {/* Centered buttons overlay */}
       <div
         style={{
-          position: 'absolute',
+          position: "absolute",
           inset: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: '20px',
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "20px",
+          pointerEvents: "none",
         }}
       >
-        <Button onClick={() => navigate('/login')}>LOGIN</Button>
-        <Button onClick={() => navigate('/signup')}>SIGN UP</Button>
-        <Button onClick={() => navigate('/cosmic')}>EXPLORE</Button>
+        <div
+          style={{
+            pointerEvents: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+          }}
+        >
+          <Button onClick={() => navigate("/login")}>LOGIN</Button>
+          <Button onClick={() => navigate("/signup")}>SIGN UP</Button>
+          <Button onClick={() => navigate("/cosmic")}>EXPLORE</Button>
+        </div>
       </div>
     </div>
   );
 }
 
-// Frame that loads Three.js build from /public/cosmic
+// Frame that shows the Three.js inputs UI built into /public/cosmic
 function CosmicFrame() {
   return (
-    <div style={{ height: '100vh', width: '100vw', margin: 0, padding: 0 }}>
+    <div style={{ height: "100vh", width: "100vw", margin: 0, padding: 0 }}>
       <iframe
-        title="Cosmic"
+        title="Cosmic Inputs"
         src="/cosmic/index.html"
-        style={{ border: 'none', width: '100%', height: '100%' }}
+        style={{ border: "none", width: "100%", height: "100%" }}
       />
     </div>
   );
 }
 
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route path="/" element={<LoadingScreen />} />
+        {/* Landing with buttons */}
+        <Route path="/" element={<LandingScreen />} />
+
+        {/* Auth pages */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+
+        {/* Three.js inputs page */}
         <Route path="/cosmic" element={<CosmicFrame />} />
+
+        {/* Occultation search + visualization */}
         <Route path="/next" element={<OccultationSearch />} />
+        <Route path="/visualize" element={<EventVisualization />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
+
+export default App;
 

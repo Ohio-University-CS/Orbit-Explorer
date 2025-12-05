@@ -21,7 +21,7 @@ const LUNAR_TYPES = [
   "total",
 ];
 
-// For now these are static; later you’ll swap to API calls
+// For now these are static; later swap to API calls
 const PLANETS = [
   "Mercury",
   "Venus",
