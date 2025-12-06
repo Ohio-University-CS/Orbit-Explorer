@@ -1,11 +1,26 @@
 from fastapi import APIRouter, Depends
 from typing import List
-from app.services.spice_events import get_events, event_types, get_occultations, get_observational_attributes
+from app.services.spice_events import (
+    get_events,
+    event_types,
+    get_occultations,
+    get_observational_attributes,
+    get_visible_planets
+)
+
+from app.services.event import (
+    get_planet_visibility
+)
 
 from app.schemas.event_item import EventItem
 from app.schemas.event_criteria import EventCriteria
 from app.schemas.location import GeodeticLocation
-from app.schemas.events import EventSearchRequest, OccultationSearchRequest, ObserveBodyRequest
+from app.schemas.events import (
+    EventSearchRequest,
+    OccultationSearchRequest,
+    ObserveBodyRequest,
+    VisiblePlanetsRequest
+)
 
 router = APIRouter()
 
@@ -45,3 +60,13 @@ async def observe_body(req: ObserveBodyRequest) -> object:
     )
 
     return obj
+
+@router.post("/visibility/planets")
+async def planets_visibility(req: VisiblePlanetsRequest) -> object:
+    obj = await get_planet_visibility(
+        req.location.lat,
+        req.location.lon,
+        req.location.alt_km / 1000,
+        req.start_time,
+        req.end_time
+    )

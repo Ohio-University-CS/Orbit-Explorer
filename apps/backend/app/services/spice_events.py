@@ -798,6 +798,13 @@ async def get_observational_attributes(
     observational_attributes = l_observational_attributes(site_name, dt, body_naif_id)
     return observational_attributes
 
+async def get_visible_planets(
+    location: GeodeticLocation,
+    start_time: datetime,
+    end_time: datetime
+) -> object:
+    pass
+
 async def get_occultations(location: GeodeticLocation, start_time: datetime, end_time: datetime, occulting_naif_id: str, occulted_naif_id: str) -> object:
     conn = get_conn()
     site_name = create_site_or_fetch(location, conn)

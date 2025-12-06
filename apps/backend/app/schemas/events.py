@@ -22,3 +22,8 @@ class ObserveBodyRequest(BaseModel):
     location: GeodeticLocation
     dt: datetime
     body_naif_id: str
+
+class VisiblePlanetsRequest(BaseModel):
+    location: GeodeticLocation
+    start_time: datetime
+    end_time: datetime

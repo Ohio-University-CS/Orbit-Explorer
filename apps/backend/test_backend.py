@@ -12,6 +12,10 @@ from app.services.spice_events import (
     l_observational_attributes,
     populate_bodies_table
 )
+
+from app.services.event import (
+    get_planet_visibility
+)
 from datetime import datetime
 
 
@@ -40,8 +44,8 @@ location = GeodeticLocation(
 
 criteria = [
 ]
-start_time = datetime(2026, 1, 1)
-end_time   = datetime(2026, 11, 11)
+start_time = datetime(2026, 1, 1,1)
+end_time   = datetime(2026, 1, 1,2)
 
 async def main():
     #guid = generate_site_guid(21)
@@ -49,13 +53,16 @@ async def main():
     #site = "GC87F937ACA4E436C8177"
     #site=guid
     #handle_occultations(site, start_time, end_time)
-    x = l_observational_attributes(
-        "BB51151016A394455ACFC",
+
+    obj = get_planet_visibility(
+        location.lat,
+        location.lon,
+        location.alt_km / 1000,
         start_time,
-        "SUN"
+        end_time
     )
 
-    x = await populate_bodies_table()
+    print(obj)
 # Run the async main function
 if __name__ == "__main__":
     asyncio.run(main())

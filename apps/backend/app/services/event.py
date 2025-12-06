@@ -1,11 +1,10 @@
 #replaced by spice_events for now
 
 
-
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 
 from app.schemas.event_item import EventItem
@@ -16,7 +15,8 @@ from app.schemas.location import GeodeticLocation
 import psycopg2
 
 
-from skyfield import api
+from skyfield.magnitudelib import planetary_magnitude
+from skyfield.api import load, wgs84
 from skyfield.searchlib import find_discrete
 from skyfield.toposlib import Topos
 
@@ -33,90 +33,74 @@ def get_conn():
         password="123456"
     )
 
+def cartesian_to_altaz(x, y, z):
+    """
+    Convert Cartesian vector to altitude and azimuth in degrees.
+    Assumes local horizon at the origin.
+    """
+    r = np.sqrt(x**2 + y**2 + z**2)
+    alt = np.arcsin(z / r)
+    az = np.arctan2(y, x)
+    return np.degrees(alt), np.degrees(az) % 360
 
-def find_occultation(t, location, observer_eph, target_eph, occulting_eph):
-    """Observer must be Earth"""
-    ref_pt = observer_eph + Topos(latitude=location.lat, longitude=location.lon, elevation_m=location.elevation)
-    o = ref_pt.at(t)
+def get_planet_visibility(observer_lat, observer_lon, observer_elevation_m,
+                          start_time, end_time, time_step_minutes=30,
+                          planets=None):
+    """
+    Compute brightness and topocentric visibility of planets from a specific Earth location,
+    manually computing topocentric vectors as Earth center vector minus site vector.
+    """
+    if planets is None:
+        planets = ['mercury', 'venus', 'mars', 'jupiter barycenter',
+                   'saturn barycenter', 'uranus barycenter', 'neptune barycenter']
 
-    # Apparent positions as seen from observer
-    target_pos = o.observe(target_eph).apparent()
-    occulting_pos = o.observe(occulting_eph).apparent()
+    ts = load.timescale()
+    eph = load('de421.bsp')
+    earth = eph['earth']
 
-    # Angular separation in degrees
-    separation = target_pos.separation_from(occulting_pos).degrees
+    # Create site object
+    site = wgs84.latlon(observer_lat, observer_lon, elevation_m=observer_elevation_m)
 
-    # Apparent angular radii in degrees
-    target_rad = target_pos.angular_radius().degrees
-    occulting_rad = occulting_pos.angular_radius().degrees
+    # Build time array
+    times = []
+    current_time = start_time
+    while current_time <= end_time:
+        times.append(ts.utc(current_time.year, current_time.month, current_time.day,
+                            current_time.hour, current_time.minute, current_time.second))
+        current_time += timedelta(minutes=time_step_minutes)
 
-    # Occultation occurs if separation < sum of angular radii
-    is_occulting = separation < (target_rad + occulting_rad)
+    results = []
 
-    print("is_occulting:", is_occulting)
-    return is_occulting
+    for planet_name in planets:
+        target = eph[planet_name]
+        planet_data = []
 
-def find_all_occulations(location: GeodeticLocation, start_time: int, end_time: int):
-    ts = api.load.timescale()
-    t0 = ts.utc(2020, 6, 2)
-    t1 = ts.utc(2021, 6, 2)
+        for t in times:
+            # ------------------------
+            # Geocentric magnitude (from Earth center)
+            # ------------------------
+            astrometric_geo = earth.at(t).observe(target)
+            mag = planetary_magnitude(astrometric_geo)
 
-    eph = api.load('de421.bsp')
-    earth, sun, moon = eph['earth'], eph['sun'], eph['moon']
-    callback = partial(
-        find_occultation,
-        location=location,
-        observer_eph=earth,
-        target_eph=sun,
-        occulting_eph=moon
-    )
+            # ------------------------
+            # Topocentric vector manually
+            # ------------------------
+            target_vec = astrometric_geo.position.km  # np.array([x, y, z])
+            site_vec = site.at(t).position.km         # np.array([x, y, z])
+            topo_vec = target_vec - site_vec
 
+            # Convert to alt/az
+            alt_deg, az_deg = cartesian_to_altaz(*topo_vec)
+            visible = alt_deg > 0
 
-    callback.step_days = .01
-    t_events, states = find_discrete(t0, t1, callback)
-
-    return t_events
-
-async def get_events(location: GeodeticLocation, start_time: int, end_time: int, whitelisted_event_types: List[str], event_specific_criteria: List[EventCriteria]) -> List[EventItem]:
-    start_dt = datetime.utcfromtimestamp(start_time)
-    end_dt = datetime.utcfromtimestamp(end_time)
-
-    events = []
-    
-    occulations = spice_get_occulations(location, start_time, end_time)
-    for idx, e in enumerate(occulations):
-        events.append(EventItem(
-            id=f"event_{idx:03d}"
-        ))
-
-    dummy_event = EventItem(
-        id="event_001",
-        type="solar_eclipse",
-        name="Partial Solar Eclipse",
-        time=start_dt,
-        desc=f"Dummy event at lat {location.lat}, lon {location.lon}"
-    )
-
-    return [dummy_event]
-
-async def event_types():
-    try:
-        conn = get_conn()
-        cur = conn.cursor()
-        event_types_list = []
-
-        cur.execute("SELECT id, parent_id, name FROM celestial_event_types")
-        for row in cur.fetchall():
-            id, parent_id, name = row
-            event_types_list.append({
-                "id": id,
-                "parent_id": parent_id,
-                "name": name
+            planet_data.append({
+                'time_utc': t.utc_iso(),
+                'magnitude': mag,
+                'altitude_deg': alt_deg,
+                'azimuth_deg': az_deg,
+                'visible': visible
             })
 
-        cur.close()
-        conn.close()
-        return event_types_list
+        results.append({'planet': planet_name, 'data': planet_data})
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get event types: {e}")
+    return results
