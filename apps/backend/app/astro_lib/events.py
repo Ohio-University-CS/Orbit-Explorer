@@ -97,22 +97,29 @@ class EventType(BaseModel):
 planets = load('de421.bsp')
 earth = planets['earth']
 
-def get_body_info(name: str):
-    name = name.lower()
 
+from app.schemas.event_item import EventItem
+from app.schemas.location import GeodeticLocation
 
-    ts = load.timescale()
-    t = ts.now()
-    body = planets[name]
+def get_events(
+    location: GeodeticLocation,
+    start_time: int,
+    end_time: int,
+    event_types: List[str],
+    event_criteria: List
+) -> List[EventItem]:
+    """
+    Temporary placeholder event generator so the backend does not crash.
+    Replace with real astronomy event calculations later.
+    """
 
-    astrometric = earth.observe(body).apparent()
-    ra, dec, distance = astrometric.radec()
-
-    return {
-        "name": name.capitalize(),
-        "right_ascension_hours": ra.hours,
-        "declination_degrees": dec.degrees,
-        "distance_au": distance.au,
-        "distance_km": distance.km,
-        "datetime": t.utc_strftime('%Y-%m-%d %H:%M:%S UTC')
-    }
+    # Example dummy event
+    return [
+        EventItem(
+            id="event_001",
+            type="solar_eclipse",
+            name="Partial Solar Eclipse",
+            time="1970-01-01T00:00:01",
+            desc=f"Dummy event at lat {location.lat}, lon {location.lon}"
+        )
+    ]
