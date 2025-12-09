@@ -1,10 +1,10 @@
-#calculate possible lunar eclipses in a timeframe
+#calculate possible lunar eclipses in a timeframe, defaults to 1 year out from current day
 import skyfield
 import datetime
 import sys
 from skyfield import almanac
-from skyfield.api import N, S, E, W, load, wgs84
-from skyfield import eclipselib
+from skyfield.api import N, S, E, W, load, wgs84 #positional constants, include world geodetic system
+from skyfield import eclipselib # used to find eclipses
 numarg = len(sys.argv) #number of command line arguments
 #checks for the right number of arguments, exits if not. will upate to default to starting with today's date
 def beginToday():
@@ -16,22 +16,28 @@ def beginToday():
     return timescale.utc(beginyear, beginmonth, beginday) 
 
 def checkValidDate(month, day, year):
+    # no zero, negative day months
     if day < 1:
         return False
+    #months cannot be less than 1 or greater than 12
     if month < 1 or month > 12 :
         return False
+    #case: month should have 31 days
     if month == 1 or month == 3 or month == 5 or month == 7 or month == 8 or month == 10 or month == 12:
         if day > 31 :
             return False
     if month == 2:
-        if year % 4 == 0: # if it is a leap year
+        if year % 4 == 0: 
+            # if it is a leap year
             if day > 29 :
                 return False
         else : 
+            # non leap year february
             if day > 28:
                 return False
             return False
     if month == 4 or month == 6 or month == 9 or month == 11:
+    #case: month should have 30 days
         if day > 30:
             return False
     return True
