@@ -8,11 +8,12 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import Main from "./components/Main";             // animated background
+import Main from "./components/Main"; // animated background
 import Login from "./Login";
 import Signup from "./Signup";
 import OccultationSearch from "./OccultationSearch";
 import EventVisualization from "./EventVisualization";
+import EventCalculations from "./EventsCalculations"; // ⬅ NEW IMPORT
 
 // Orange / black button style
 const Button = styled.button`
@@ -111,10 +112,12 @@ function App() {
         {/* Occultation search + visualization */}
         <Route path="/next" element={<OccultationSearch />} />
         <Route path="/visualize" element={<EventVisualization />} />
+
+        {/* ➕ NEW: Calculations page */}
+        <Route path="/calculate" element={<EventCalculations />} />
       </Routes>
     </Router>
   );
 }
 
 export default App;
-

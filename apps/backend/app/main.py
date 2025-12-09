@@ -114,7 +114,7 @@ def get_conn():
         user="postgres",
         password="123456"
     )
-=======
+
 # Register routers
 app.include_router(user_router, prefix="/users", tags=["users"])
 app.include_router(event_router, prefix="/events", tags=["events"])

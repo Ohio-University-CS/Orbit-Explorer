@@ -1,3 +1,4 @@
+// frontendeng/frontend/src/OccultationSearch.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -104,12 +105,22 @@ const resultCardStyle = {
 };
 
 const viewButtonStyle = {
-  marginTop: "8px",
   padding: "6px 12px",
   borderRadius: "999px",
   border: "none",
   background: "#ffffff",
   color: "#000",
+  fontSize: "12px",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const calcButtonStyle = {
+  padding: "6px 12px",
+  borderRadius: "999px",
+  border: "1px solid #ffb13d",
+  background: "#111",
+  color: "#ff9d2b",
   fontSize: "12px",
   fontWeight: 600,
   cursor: "pointer",
@@ -245,6 +256,20 @@ export default function OccultationSearch() {
 
   const openVisualization = (event) => {
     navigate("/visualize", { state: { event } });
+  };
+
+  const openCalculations = (event) => {
+    // send the event + user inputs to the calculations page
+    navigate("/calculate", {
+      state: {
+        event,
+        startTime,
+        endTime,
+        lat,
+        lon,
+        elevation,
+      },
+    });
   };
 
   return (
@@ -519,13 +544,29 @@ export default function OccultationSearch() {
                 </div>
               )}
 
-              <button
-                type="button"
-                style={viewButtonStyle}
-                onClick={() => openVisualization(ev)}
+              <div
+                style={{
+                  marginTop: 8,
+                  display: "flex",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
               >
-                View 3D Visualization
-              </button>
+                <button
+                  type="button"
+                  style={viewButtonStyle}
+                  onClick={() => openVisualization(ev)}
+                >
+                  View 3D Visualization
+                </button>
+                <button
+                  type="button"
+                  style={calcButtonStyle}
+                  onClick={() => openCalculations(ev)}
+                >
+                  Calculations
+                </button>
+              </div>
             </div>
           ))}
         </section>
@@ -533,6 +574,8 @@ export default function OccultationSearch() {
     </div>
   );
 }
+
+
 
 
 
