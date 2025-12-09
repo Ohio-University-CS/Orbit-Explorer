@@ -41,7 +41,12 @@ location = GeodeticLocation(
     alt_km=0,
 )
 
-
+#cleveland
+location = GeodeticLocation(
+    lat =41.4993,
+    lon=-81.6944,
+    alt_km=199,
+)
 criteria = [
 ]
 start_time = datetime(2026, 1, 1,1)
