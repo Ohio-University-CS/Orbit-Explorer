@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import TopMenu from "../components/TopMenu";
 
+import { setFavicon } from "../setFavicon";
+
 const API_BASE =
     import.meta.env?.VITE_API_BASE ||
     process.env.REACT_APP_API_BASE ||
@@ -23,6 +25,15 @@ export default function Account() {
     const user_uuid = localStorage.getItem("user_uuid");
 
     const headers = { Authorization: `Bearer ${token}` };
+
+
+    useEffect(() => {
+        setFavicon("/icons/space.ico");
+    }, []);
+
+    useEffect(() => {
+        document.title = 'Account';
+    }, []);
 
     // Fetch saved events
     useEffect(() => {

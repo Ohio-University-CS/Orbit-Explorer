@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+import { setFavicon } from "../setFavicon";
+
 const API_BASE =
   import.meta.env?.VITE_API_BASE ||
   process.env.REACT_APP_API_BASE ||
@@ -25,48 +27,57 @@ export default function ObserveObject() {
   const token = localStorage.getItem("access_token");
   const headers = { Authorization: `Bearer ${token}` };
 
+
+  useEffect(() => {
+    setFavicon("/icons/space.ico");
+  }, []);
+
+  useEffect(() => {
+    document.title = 'Observe Object';
+  }, []);
+
+
   useEffect(() => {
     if (data) return;
     if (!id) return;
 
     const loadEvent = async () => {
-    try {
+      try {
         const res = await axios.post(
-        `${API_BASE}/users/events/${id}`,
-        {},
-        { headers }
+          `${API_BASE}/users/events/${id}`,
+          {},
+          { headers }
         );
 
         console.log(res);
         const payload = res.data?.payload;
         if (!payload) {
-        setError("No payload found in event.");
-        return;
+          setError("No payload found in event.");
+          return;
         }
 
         const raw = payload.raw_event;
         if (!raw) {
-        setError("No raw_event found in payload.");
-        return;
+          setError("No raw_event found in payload.");
+          return;
         }
 
-        // BODY_POSITION format → raw_event IS the data
-        setBody("Body Position"); // or something custom
+        setBody("Body Position");
         setData(raw);
 
-    } catch (err) {
+      } catch (err) {
         console.error(err);
         setError("Failed to load event data");
-    } finally {
+      } finally {
         setLoading(false);
-    }
+      }
     };
 
     loadEvent();
   }, [id]);
 
   // ----------------------------------------
-  // UI STATES (matching occultation theme)
+  // UI STATES
   // ----------------------------------------
 
   if (loading) {

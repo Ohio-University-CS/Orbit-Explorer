@@ -18,7 +18,6 @@ export default function Event() {
     const token = localStorage.getItem("access_token");
     const headers = { Authorization: `Bearer ${token}` };
 
-    // Correct 3 event types, new endpoints now query DB
     const redirectMap = {
         OCCULTATION: `/view-occultation/${id}`,
         PLANET_VISIBILITY: `/view-visibility/${id}`,
@@ -33,8 +32,8 @@ export default function Event() {
             try {
                 const res = await axios.post(
                     `${API_BASE}/users/events/${id}`,
-                    {},             // empty POST body
-                    { headers }     // headers go here
+                    {},
+                    { headers }
                 );
 
                 const evt = res.data;

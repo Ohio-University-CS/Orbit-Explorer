@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 import {
@@ -12,6 +12,8 @@ import {
 } from "chart.js";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+import { setFavicon } from "../setFavicon";
+
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 export default function ViewVisibility() {
@@ -21,6 +23,16 @@ export default function ViewVisibility() {
   const stateData = location.state?.data;
   const planet = stateData?.planet;
   const measurements = stateData?.data || [];
+
+  
+    useEffect(() => {
+      setFavicon("/icons/space.ico");
+    }, []);
+  
+    useEffect(() => {
+      document.title = 'View Visibility';
+    }, []);
+  
 
   // ---------------- Hooks at the top ----------------
   const [currentGraph, setCurrentGraph] = useState("magnitude");

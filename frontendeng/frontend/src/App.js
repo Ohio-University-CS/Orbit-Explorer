@@ -1,5 +1,6 @@
 // frontendeng/frontend/src/App.js
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import {
   BrowserRouter as Router,
@@ -12,7 +13,6 @@ import Main from "./components/Main";             // animated background
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Search from "./Search";
-import EventVisualization from "./EventVisualization";
 import ViewOccultation from "./pages/ViewOccultation";
 
 import Settings from "./pages/Settings";
@@ -20,6 +20,9 @@ import Account from "./pages/Account";
 import ViewVisibility from "./pages/ViewVisibility";
 import ObserveObject from "./pages/ObserveObject";
 import Event from "./pages/Event";
+
+
+import { setFavicon } from "./setFavicon";
 
 // Orange / black button style
 const Button = styled.button`
@@ -45,6 +48,15 @@ const Button = styled.button`
 // Landing screen = Main background + login/signup/explore buttons
 function LandingScreen() {
   const navigate = useNavigate();
+
+  
+      useEffect(() => {
+          setFavicon("/icons/space.ico");
+      }, []);
+  
+      useEffect(() => {
+          document.title = 'Home';
+      }, []);
 
   return (
     <div
@@ -122,9 +134,8 @@ function App() {
         {/* Three.js inputs page */}
         <Route path="/cosmic" element={<CosmicFrame />} />
 
-        {/* Occultation search + visualization */}
+        {/* Occultation search*/}
         <Route path="/search" element={<Search />} />
-        <Route path="/visualize" element={<EventVisualization />} />
 
       </Routes>
     </Router>

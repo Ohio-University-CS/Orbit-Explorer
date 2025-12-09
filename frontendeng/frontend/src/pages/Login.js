@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
+import { setFavicon } from "../setFavicon";
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  
+    useEffect(() => {
+      setFavicon("/icons/space.ico");
+    }, []);
+  
+    useEffect(() => {
+      document.title = 'Login';
+    }, []);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();

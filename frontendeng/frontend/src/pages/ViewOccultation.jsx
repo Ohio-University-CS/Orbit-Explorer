@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Line } from "react-chartjs-2";
 import axios from "axios";
 
+import { setFavicon } from "../setFavicon";
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,6 +36,16 @@ export default function ViewOccultation() {
   const token = localStorage.getItem("access_token");
   const headers = { Authorization: `Bearer ${token}` };
 
+
+  useEffect(() => {
+    setFavicon("/icons/space.ico");
+  }, []);
+
+  useEffect(() => {
+    document.title = 'View Occultation';
+  }, []);
+
+
   useEffect(() => {
     if (data) return;
 
@@ -41,11 +53,10 @@ export default function ViewOccultation() {
       try {
         const res = await axios.post(
           `${API_BASE}/users/events/${id}`,
-          {},       // empty POST body
-          { headers } // headers with Authorization
+          {},
+          { headers }
         );
 
-        // Occultation payload is stored in payload.raw_event
         console.log(res);
         const occult = res.data?.payload?.raw_event;
         if (!occult) {

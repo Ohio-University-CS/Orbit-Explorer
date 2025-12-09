@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
+import { setFavicon } from "../setFavicon";
 
 export default function Signup() {
   const [username, setUsername] = useState('');
@@ -10,6 +12,15 @@ export default function Signup() {
   const [lastName, setLastName] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setFavicon("/icons/space.ico");
+  }, []);
+
+  useEffect(() => {
+    document.title = 'Signup';
+  }, []);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,6 +45,7 @@ export default function Signup() {
       );
     }
   };
+
 
   const goHome = () => navigate('/');
   const goLogin = () => navigate('/login');

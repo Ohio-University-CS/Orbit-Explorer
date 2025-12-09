@@ -7,6 +7,8 @@ import axios from "axios";
 import dayjs from "dayjs";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+import { setFavicon } from "./setFavicon";
+
 const API_BASE =
   import.meta.env?.VITE_API_BASE ||
   process.env.REACT_APP_API_BASE ||
@@ -61,17 +63,13 @@ export default function CelestialSearch() {
     return { Authorization: `Bearer ${token}` };
   };
 
-  const safeFmt = (t) => {
-    if (!t) return "—";
-    // Normalize "YYYY-MM-DDTHH:MM" into full ISO if needed
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(t)) {
-      t = t + ":00";
-    }
-    const d = new Date(t);
-    if (isNaN(d)) return "—";
-    return d.toLocaleString();
-  };
+  useEffect(() => {
+    setFavicon("/icons/space.ico");
+  }, []);
 
+  useEffect(() => {
+    document.title = 'Search';
+  }, []);
 
   useEffect(() => {
     try {
@@ -171,7 +169,7 @@ export default function CelestialSearch() {
     });
   };
 
-  const searchEvent = async (endpoint, payload, headers) => {// Send empty body {} but include headers properly
+  const searchEvent = async (endpoint, payload, headers) => {
     const res = await axios.post(`${API_BASE}${endpoint}`, payload, { headers });
     let normalized = [];
 
@@ -265,7 +263,6 @@ export default function CelestialSearch() {
 
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Flexible payload for any event type
       const savePayload = {
         event_type: selectedEventType,
         payload: {
@@ -275,7 +272,7 @@ export default function CelestialSearch() {
           occulting_naif_id: event.occulting_naif_id,
           occulted_naif_id: event.occulted_naif_id,
           body_naif_id: event.body_naif_id || event.naif_id,
-          raw_event: event // store full event for reference
+          raw_event: event
         }
       };
 
@@ -457,9 +454,10 @@ export default function CelestialSearch() {
                 let route = "/observe-object";
 
                 if (selectedEventType === "OCCULTATION") {
-                  description = `${ev.occulted_name} occulted by ${ev.occulting_name}`;
+                  description = ``;
                   linkState = { body: ev.occulted_name, data: ev };
                   route = "/view-occultation";
+                  linkText = "View Occultation";
 
                 } else if (selectedEventType === "BODY_POSITION") {
                   description = `Body position`;

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import TopMenu from "../components/TopMenu";
 
+import { setFavicon } from "../setFavicon";
+
 const API_BASE =
   import.meta.env?.VITE_API_BASE ||
   process.env.REACT_APP_API_BASE ||
@@ -12,6 +14,14 @@ export default function Settings() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
+
+  useEffect(() => {
+    setFavicon("/icons/space.ico");
+  }, []);
+
+  useEffect(() => {
+    document.title = 'Settings';
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -81,13 +91,13 @@ export default function Settings() {
               <input className="form-control" type="email" value={user.email || ""} readOnly />
             </div>
             <div className="mb-3">
-            <label className="form-label text-white">Account Created</label>
-            <input
+              <label className="form-label text-white">Account Created</label>
+              <input
                 className="form-control"
                 type="text"
                 value={user.created_at ? new Date(user.created_at).toLocaleString() : ""}
                 readOnly
-            />
+              />
             </div>
           </div>
         )}
