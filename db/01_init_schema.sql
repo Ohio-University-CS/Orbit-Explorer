@@ -15,3 +15,49 @@ CREATE TABLE IF NOT EXISTS celestial_event_types (
     parent_id INT REFERENCES celestial_event_types(id),
     description TEXT
 );
+
+CREATE TABLE IF NOT EXISTS sites (
+    id SERIAL PRIMARY KEY,              -- auto-increment integer
+    guid VARCHAR(21) UNIQUE NOT NULL,      -- 21-character site ID / name
+    lat DOUBLE PRECISION NOT NULL,      -- latitude in degrees
+    lon DOUBLE PRECISION NOT NULL,      -- longitude in degrees
+    alt_km DOUBLE PRECISION NOT NULL,   -- altitude in km
+    site_name TEXT,                     -- optional human-readable name
+    site_description TEXT,              -- optional description
+    idcode INTEGER GENERATED ALWAYS AS IDENTITY (
+        START WITH 399000
+        INCREMENT BY 1
+    ),
+    UNIQUE (lat, lon, alt_km)           -- unique coordinates
+);
+
+CREATE TABLE IF NOT EXISTS bodies (
+    id SERIAL PRIMARY KEY,
+    naif_id TEXT UNIQUE NOT NULL,
+    body_type TEXT NOT NULL CHECK (
+        body_type IN ('planet', 'moon', 'asteroid', 'comet', 'spacecraft', 'site', 'barycenter')
+    ),
+    body_desc TEXT
+);
+
+CREATE TABLE IF NOT EXISTS user_locations (
+    id SERIAL PRIMARY KEY,
+    user_uuid TEXT NOT NULL,
+    loc_name VARCHAR(255) DEFAULT '',
+    loc_description TEXT DEFAULT '',
+    latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
+    alt_km DOUBLE PRECISION DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_uuid, latitude, longitude, alt_km)
+);
+
+
+CREATE TABLE IF NOT EXISTS user_events (
+  id SERIAL PRIMARY KEY,
+  user_uuid TEXT NOT NULL,
+  event_type VARCHAR NOT NULL,
+  payload JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);

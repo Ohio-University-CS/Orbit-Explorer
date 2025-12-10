@@ -25,15 +25,25 @@ def gen_events():
     lunar_search_params = [
         Field("")
     ]
+
+    """
+OCCULTATION
+  ├─ ECLIPSE
+  │    ├─ SOLAR (partial, total, annular, hybrid)
+  │    └─ LUNAR (penumbral, partial, total)
+  ├─ PLANETARY_OCCULTATION
+  ├─ LUNAR_OCCULTATION (of stars/planets)
+  ├─ ASTEROID_OCCULTATION
+  └─ TRANSIT
+
+    """
     # ------------------------------
     # 1. Eclipses
     # ------------------------------
     LUNAR_ECLIPSE = EventType("LUNAR_ECLIPSE", [
         EventType("PENUMBRAL"),
         EventType("PARTIAL"),
-        EventType("TOTAL"),
-        EventType("CENTRAL"),
-        EventType("SELENELION")
+        EventType("TOTAL")
     ])
 
     SOLAR_ECLIPSE = EventType("SOLAR_ECLIPSE", [
@@ -96,6 +106,7 @@ class EventType(BaseModel):
 
 planets = load('de421.bsp')
 earth = planets['earth']
+
 
 def get_body_info(name: str):
     name = name.lower()

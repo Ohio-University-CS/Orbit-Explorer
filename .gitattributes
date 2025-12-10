@@ -1,0 +1,5 @@
+# SPICE text files should always use LF
+*.tpc text eol=lf
+*.tf  text eol=lf
+*.tp  text eol=lf
+*.def text eol=lf

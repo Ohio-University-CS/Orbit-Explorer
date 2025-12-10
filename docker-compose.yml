@@ -7,6 +7,7 @@ services:
       DATABASE_URL: postgres://postgres:123456@db:5432/orbit_explorer
     depends_on:
       - db
+    profiles: ["backend"]
 
   db:
     image: postgres:16
@@ -19,6 +20,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db:/docker-entrypoint-initdb.d
+    profiles: ["db"]
+
   frontend:
     build: ./frontendeng/frontend
     ports:
@@ -28,6 +31,7 @@ services:
       - /app/node_modules
     stdin_open: true
     tty: true
+    profiles: ["frontend"]
 
 volumes:
   postgres_data:
