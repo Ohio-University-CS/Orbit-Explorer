@@ -1,35 +1,22 @@
-#replaced by spice_events for now, nvm using both
-import json
-
 from fastapi import HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Dict, Any
-from datetime import datetime, timedelta
-from functools import partial
+from typing import List
+from datetime import datetime
 
 from app.schemas.event_item import EventItem
 from app.schemas.event_criteria import EventCriteria
 from app.schemas.location import GeodeticLocation
 
 import psycopg2
-from psycopg2 import errors
 
 
-from skyfield.magnitudelib import planetary_magnitude
-from skyfield.api import load, wgs84
-from skyfield.searchlib import find_discrete
-from skyfield.toposlib import Topos
-from skyfield import almanac
-
-from skyfield.data import mpc
-from skyfield.constants import AU_KM
-
-import spiceypy as spice
-import numpy as np
-
-
-# Database connection function
+# -------------------------------------------------------------------
+# Database connection helper
+# -------------------------------------------------------------------
 def get_conn():
+    """
+    Open a new connection to the Postgres database running in the
+    Docker container named 'db'.
+    """
     return psycopg2.connect(
         host="db",
         port=5432,
@@ -38,176 +25,120 @@ def get_conn():
         password="123456",
     )
 
-def cartesian_to_altaz(x, y, z):
+
+# -------------------------------------------------------------------
+# Event search
+# -------------------------------------------------------------------
+async def get_events(
+    location: GeodeticLocation,
+    start_time: int,
+    end_time: int,
+    whitelisted_event_types: List[str],
+    event_specific_criteria: List[EventCriteria],
+) -> List[EventItem]:
     """
-    Convert Cartesian vector to altitude and azimuth in degrees.
-    Assumes local horizon at the origin.
-    """
-    r = np.sqrt(x**2 + y**2 + z**2)
-    alt = np.arcsin(z / r)
-    az = np.arctan2(y, x)
-    return np.degrees(alt), np.degrees(az) % 360
+    Fetch real events from the celestial_events table.
 
-
-def is_body_up(ephemeris, target, latitude_deg, longitude_deg, elevation_m=0,
-               horizon_degrees=-0.5666666666666667, radius_degrees=0):
-    """
-    Returns a function that takes a Skyfield Time object and returns True if
-    the target body is above the horizon at that time, False otherwise.
-    
-    Parameters:
-        ephemeris      - Skyfield ephemeris object
-        target         - target body (planet, Sun, Moon, star)
-        latitude_deg   - observer latitude in degrees
-        longitude_deg  - observer longitude in degrees
-        elevation_m    - observer elevation in meters
-        horizon_degrees - altitude in degrees of horizon (default: -0.5667 for Sun)
-        radius_degrees - apparent radius of the object (default: 0)
-    
-    Returns:
-        function(time) -> bool
-    """
-    # Observer location
-    topos = wgs84.latlon(latitude_deg, longitude_deg, elevation_m)
-
-    # Build the "body up" function using Skyfield's almanac
-    body_up_fn = almanac.risings_and_settings(
-        ephemeris,
-        target,
-        topos,
-        horizon_degrees=horizon_degrees,
-        radius_degrees=radius_degrees
-    )
-
-    def check(time):
-        """Return True if body is up at given Skyfield Time object"""
-        return body_up_fn(time)
-
-    return check
-
-def get_planet_visibility(observer_lat, observer_lon, observer_elevation_m,
-                          start_time, end_time, time_step_minutes=30,
-                          planets=None):
-    """
-    Compute planet visibility (magnitude) for an observer on Earth.
-    Returns list of dicts: [{planet: name, data: [{time_utc, magnitude}]}]
-    Only native Python types returned.
+    - Filters by time window [start_time, end_time]
+    - Optionally filters by event type names (from celestial_event_types)
+    - Ignores event_specific_criteria for now (hook for future logic)
     """
 
-    if planets is None:
-        planets = ['mercury', 'venus', 'mars', 'jupiter barycenter',
-                   'saturn barycenter', 'uranus barycenter', 'neptune barycenter']
+    # Convert unix timestamps (seconds) -> Python datetimes (UTC)
+    start_dt = datetime.utcfromtimestamp(start_time)
+    end_dt = datetime.utcfromtimestamp(end_time)
 
-    ts = load.timescale()
-    eph = load('de421.bsp')
-    earth = eph['earth']
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
 
-    # Build time array
-    times = []
-    current_time = start_time
-    while current_time <= end_time:
-        times.append(ts.utc(current_time.year, current_time.month, current_time.day,
-                            current_time.hour, current_time.minute, current_time.second))
-        current_time += timedelta(minutes=time_step_minutes)
+        # Base query
+        sql = """
+            SELECT
+                e.id,
+                cet.event_name,
+                e.name,
+                e.event_time,
+                e.description,
+                e.latitude,
+                e.longitude,
+                e.elevation
+            FROM celestial_events e
+            JOIN celestial_event_types cet
+              ON e.type_id = cet.id
+            WHERE e.event_time BETWEEN %s AND %s
+        """
+        params = [start_dt, end_dt]
 
-    results = []
+        # If user picked specific event types, filter by them
+        if whitelisted_event_types:
+            sql += " AND cet.event_name = ANY(%s)"
+            params.append(whitelisted_event_types)
 
-    for planet_name in planets:
-        target = eph[planet_name]
-        planet_data = []
+        sql += " ORDER BY e.event_time;"
 
-        for t in times:
-            # Geocentric magnitude (from Earth center)
-            astrometric_geo = earth.at(t).observe(target)
-            mag = float(planetary_magnitude(astrometric_geo))  # convert numpy.float64 → float
+        cur.execute(sql, params)
+        rows = cur.fetchall()
 
-            planet_data.append({
-                'time_utc': t.utc_iso(),
-                'magnitude': mag
-            })
+        events: List[EventItem] = []
+        for row in rows:
+            (
+                event_id,
+                event_type,
+                name,
+                event_time,
+                desc,
+                lat,
+                lon,
+                elev,
+            ) = row
 
-        results.append({
-            'planet': planet_name,
-            'data': planet_data
-        })
+            events.append(
+                EventItem(
+                    id=str(event_id),
+                    type=event_type,
+                    name=name,
+                    time=event_time,
+                    desc=desc or "",
+                )
+            )
 
-    return results
+        cur.close()
+        conn.close()
 
-def get_planets():
+        return events
+
+    except Exception as e:
+        # Surface any DB issues as a 500 to the frontend
+        raise HTTPException(status_code=500, detail=f"Failed to get events: {e}")
+
+
+# -------------------------------------------------------------------
+# Event types
+# -------------------------------------------------------------------
+async def event_types():
     """
-    Returns basic info for major planets using fixed NAIF IDs.
+    Return the event type tree from celestial_event_types.
     """
-    return [
-        {'naif_id': 199, 'name': 'Mercury', 'desc': 'Innermost planet'},
-        {'naif_id': 299, 'name': 'Venus', 'desc': 'Second planet from the Sun'},
-        {'naif_id': 399, 'name': 'Earth', 'desc': 'Our home planet'},
-        {'naif_id': 499, 'name': 'Mars', 'desc': 'Red planet'},
-        {'naif_id': 5,   'name': 'Jupiter', 'desc': 'Gas giant'},
-        {'naif_id': 6,   'name': 'Saturn', 'desc': 'Gas giant with rings'},
-        {'naif_id': 7,   'name': 'Uranus', 'desc': 'Ice giant'},
-        {'naif_id': 8,   'name': 'Neptune', 'desc': 'Ice giant'},
-        {'naif_id': 9,   'name': 'Pluto', 'desc': 'Dwarf planet'},
-    ]
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        event_types_list = []
 
+        cur.execute("SELECT id, parent_id, event_name FROM celestial_event_types")
+        for row in cur.fetchall():
+            id, parent_id, event_name = row
+            event_types_list.append(
+                {
+                    "id": id,
+                    "parent_id": parent_id,
+                    "name": event_name,
+                }
+            )
 
-def get_moons():
-    """
-    Returns NAIF IDs for major moons. Does not use Skyfield lookups.
-    """
-    moons = []
+        cur.close()
+        conn.close()
+        return event_types_list
 
-    # Earth
-    moons.append({'naif_id': 301, 'name': 'Moon', 'planet': 'Earth', 'desc': "Earth's natural satellite"})
-
-    # Mars
-    moons.append({'naif_id': 401, 'name': 'Phobos', 'planet': 'Mars', 'desc': "Innermost moon of Mars"})
-    moons.append({'naif_id': 402, 'name': 'Deimos', 'planet': 'Mars', 'desc': "Outer moon of Mars"})
-
-    # Jupiter
-    moons.extend([
-        {'naif_id': 501, 'name': 'Io', 'planet': 'Jupiter', 'desc': 'Moon of Jupiter'},
-        {'naif_id': 502, 'name': 'Europa', 'planet': 'Jupiter', 'desc': 'Moon of Jupiter'},
-        {'naif_id': 503, 'name': 'Ganymede', 'planet': 'Jupiter', 'desc': 'Moon of Jupiter'},
-        {'naif_id': 504, 'name': 'Callisto', 'planet': 'Jupiter', 'desc': 'Moon of Jupiter'},
-    ])
-
-    # Saturn
-    moons.extend([
-        {'naif_id': 601, 'name': 'Mimas', 'planet': 'Saturn', 'desc': 'Moon of Saturn'},
-        {'naif_id': 602, 'name': 'Enceladus', 'planet': 'Saturn', 'desc': 'Moon of Saturn'},
-        {'naif_id': 603, 'name': 'Tethys', 'planet': 'Saturn', 'desc': 'Moon of Saturn'},
-        {'naif_id': 604, 'name': 'Dione', 'planet': 'Saturn', 'desc': 'Moon of Saturn'},
-        {'naif_id': 605, 'name': 'Rhea', 'planet': 'Saturn', 'desc': 'Moon of Saturn'},
-        {'naif_id': 606, 'name': 'Titan', 'planet': 'Saturn', 'desc': 'Moon of Saturn'},
-        {'naif_id': 608, 'name': 'Iapetus', 'planet': 'Saturn', 'desc': 'Moon of Saturn'},
-    ])
-
-    # Uranus
-    moons.extend([
-        {'naif_id': 701, 'name': 'Miranda', 'planet': 'Uranus', 'desc': 'Moon of Uranus'},
-        {'naif_id': 702, 'name': 'Ariel', 'planet': 'Uranus', 'desc': 'Moon of Uranus'},
-        {'naif_id': 703, 'name': 'Umbriel', 'planet': 'Uranus', 'desc': 'Moon of Uranus'},
-        {'naif_id': 704, 'name': 'Titania', 'planet': 'Uranus', 'desc': 'Moon of Uranus'},
-        {'naif_id': 705, 'name': 'Oberon', 'planet': 'Uranus', 'desc': 'Moon of Uranus'},
-    ])
-
-    # Neptune
-    moons.extend([
-        {'naif_id': 801, 'name': 'Triton', 'planet': 'Neptune', 'desc': 'Moon of Neptune'},
-        {'naif_id': 802, 'name': 'Nereid', 'planet': 'Neptune', 'desc': 'Moon of Neptune'},
-    ])
-
-    return moons
-
-
-def get_asteroids():
-    """
-    Returns a small sample of known asteroids.
-    """
-    asteroids = [
-        {'naif_id': 2000001, 'name': 'Ceres', 'desc': 'Largest asteroid / dwarf planet'},
-        {'naif_id': 2000002, 'name': 'Pallas', 'desc': 'Second largest asteroid'},
-        {'naif_id': 2000004, 'name': 'Vesta', 'desc': 'Third largest asteroid'},
-        {'naif_id': 2000007, 'name': 'Hygiea', 'desc': 'Fourth largest asteroid'},
-    ]
-    return asteroids
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get event types: {e}")

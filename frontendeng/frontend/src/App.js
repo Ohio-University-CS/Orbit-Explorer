@@ -1,6 +1,5 @@
 // frontendeng/frontend/src/App.js
-
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styled from "styled-components";
 import {
   BrowserRouter as Router,
@@ -9,20 +8,12 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import Main from "./components/Main";             // animated background
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import Search from "./Search";
-import ViewOccultation from "./pages/ViewOccultation";
-
-import Settings from "./pages/Settings";
-import Account from "./pages/Account";
-import ViewVisibility from "./pages/ViewVisibility";
-import ObserveObject from "./pages/ObserveObject";
-import Event from "./pages/Event";
-
-
-import { setFavicon } from "./setFavicon";
+import Main from "./components/Main"; // animated background
+import Login from "./Login";
+import Signup from "./Signup";
+import OccultationSearch from "./OccultationSearch";
+import EventVisualization from "./EventVisualization";
+import EventCalculations from "./EventsCalculations"; // ⬅ NEW IMPORT
 
 // Orange / black button style
 const Button = styled.button`
@@ -48,15 +39,6 @@ const Button = styled.button`
 // Landing screen = Main background + login/signup/explore buttons
 function LandingScreen() {
   const navigate = useNavigate();
-
-  
-      useEffect(() => {
-          setFavicon("/icons/space.ico");
-      }, []);
-  
-      useEffect(() => {
-          document.title = 'Home';
-      }, []);
 
   return (
     <div
@@ -93,7 +75,7 @@ function LandingScreen() {
         >
           <Button onClick={() => navigate("/login")}>LOGIN</Button>
           <Button onClick={() => navigate("/signup")}>SIGN UP</Button>
-          <Button onClick={() => navigate("/search")}>EXPLORE</Button>
+          <Button onClick={() => navigate("/cosmic")}>EXPLORE</Button>
         </div>
       </div>
     </div>
@@ -119,13 +101,6 @@ function App() {
       <Routes>
         {/* Landing with buttons */}
         <Route path="/" element={<LandingScreen />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/account" element={<Account />} />
-
-        <Route path="/view-occultation/:id?" element={<ViewOccultation />} />
-        <Route path="/view-visibility/:id?" element={<ViewVisibility/>} />
-        <Route path="/event/:id" element={<Event />} /> {}
-        <Route path="/observe-object/:id?" element={<ObserveObject/>} />
 
         {/* Auth pages */}
         <Route path="/login" element={<Login />} />
@@ -134,9 +109,12 @@ function App() {
         {/* Three.js inputs page */}
         <Route path="/cosmic" element={<CosmicFrame />} />
 
-        {/* Occultation search*/}
-        <Route path="/search" element={<Search />} />
+        {/* Occultation search + visualization */}
+        <Route path="/next" element={<OccultationSearch />} />
+        <Route path="/visualize" element={<EventVisualization />} />
 
+        {/* ➕ NEW: Calculations page */}
+        <Route path="/calculate" element={<EventCalculations />} />
       </Routes>
     </Router>
   );
