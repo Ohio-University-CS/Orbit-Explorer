@@ -20,9 +20,9 @@ const db = mysql.createConnection({
 // Connect and log result
 db.connect((err) => {
   if (err) {
-    console.error('❌ DB CONNECTION ERROR:', err);
+    console.error('DB CONNECTION ERROR:', err);
   } else {
-    console.log('✅ MySQL connected');
+    console.log('MySQL connected');
   }
 });
 
@@ -34,7 +34,7 @@ app.get('/', (req, res) => {
 // LOGIN ENDPOINT
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  console.log('🔐 Login attempt:', username, password);
+  console.log('Login attempt:', username, password);
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Missing username or password' });
@@ -44,7 +44,7 @@ app.post('/login', (req, res) => {
 
   db.query(sql, [username, password], (err, rows) => {
     if (err) {
-      console.error('❌ DB QUERY ERROR (login):', err);
+      console.error('DB QUERY ERROR (login):', err);
       return res.status(500).json({
         message: 'Database error',
         error: err.code || err.message,
@@ -52,10 +52,10 @@ app.post('/login', (req, res) => {
     }
 
     if (rows.length > 0) {
-      console.log('✅ Login Successful for:', username);
+      console.log('Login Successful for:', username);
       return res.json({ message: 'Login Successfully' });
     } else {
-      console.log('❌ No matching record for:', username);
+      console.log('No matching record for:', username);
       return res.status(401).json({ message: 'No Record' });
     }
   });
@@ -64,7 +64,7 @@ app.post('/login', (req, res) => {
 // SIGNUP ENDPOINT
 app.post('/signup', (req, res) => {
   const { username, password } = req.body;
-  console.log('📝 Signup attempt:', username, password);
+  console.log('Signup attempt:', username, password);
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Missing username or password' });
@@ -75,7 +75,7 @@ app.post('/signup', (req, res) => {
 
   db.query(checkSql, [username], (err, rows) => {
     if (err) {
-      console.error('❌ DB QUERY ERROR (check user):', err);
+      console.error('DB QUERY ERROR (check user):', err);
       return res.status(500).json({ message: 'Database error' });
     }
 
@@ -89,11 +89,11 @@ app.post('/signup', (req, res) => {
 
     db.query(insertSql, [username, password], (err2, result) => {
       if (err2) {
-        console.error('❌ DB QUERY ERROR (insert user):', err2);
+        console.error('DB QUERY ERROR (insert user):', err2);
         return res.status(500).json({ message: 'Database error' });
       }
 
-      console.log('✅ User created with id:', result.insertId);
+      console.log('User created with id:', result.insertId);
       return res.json({ message: 'Signup successful' });
     });
   });
@@ -101,5 +101,5 @@ app.post('/signup', (req, res) => {
 
 // Start server
 app.listen(8081, () => {
-  console.log('🚀 Backend running at http://localhost:8081');
+  console.log('Backend running at http://localhost:8081');
 });
