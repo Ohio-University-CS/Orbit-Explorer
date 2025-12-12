@@ -4,7 +4,7 @@ docker compose up --build db backend frontend
 ## Project Description
 **Orbit Explorer** is a full stack web application that allows users to explore astronomical events such as occultations, eclipses, transits, and celestial alignments based on a selected time window and observer location.
 
-The project integrates a **FastAPI backend**, **PostgreSQL database**, and a **React + Three.js frontend** to deliver both data-driven event searches and immersive **3D celestial visualizations**.
+The project integrates a **FastAPI backend**, **PostgreSQL database**, and a **React + Three.js frontend** to deliver both data-driven event searches and cool **3D celestial visualizations**.
 
 The goal is to make complex astronomical phenomena **interactive, visual, and accessible**.
 
