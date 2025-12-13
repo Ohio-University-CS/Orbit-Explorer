@@ -51,7 +51,7 @@ git clone https://github.com/Ohio-University-CS/Orbit-Explorer.git
 
 ### Start Everything
 ```sh
-docker compose up --build
+docker compose up --build db backend frontend
 ```
 
 ### Frontend: http://localhost:3000
@@ -78,7 +78,7 @@ Event Type: OCCULTATION
 -Pop up to view the event type's 3D visualization
 
 ## Known Issues
--Manual time and date input
+-SPK and PCK Kernel management incomplete
 -Authentication endpoints still being finalized
 -Docker rebuilds may fail due to cached layers
 
@@ -89,8 +89,12 @@ Event Type: OCCULTATION
 
 ## Contributors
 Victoria: Frontend UI, Occultation Search, 3D Visualizations, Calculations Work
-Jim: Backend, API Routing and Authentication 
+
+Jim: Backend, API Routing, helped with calculations: occultations, positioning, assisted Victoria with some frontend functionality, and Authentication 
+
 Luke: Skyfield Calculations
+
 Mckenzie: Database schema 
+
 Delonte: Cloud Server Management 
 
