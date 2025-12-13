@@ -8,6 +8,8 @@ The project integrates a **FastAPI backend**, **PostgreSQL database**, and a **R
 
 The goal is to make complex astronomical phenomena **interactive, visual, and accessible**.
 
+Video Demo: https://drive.google.com/file/d/1nNNqgEZ10phCF15xNr6a8QCDDwOfMQkU/view?usp=sharing
+
 ## Features 
 
 ### Occultation & Event Search
