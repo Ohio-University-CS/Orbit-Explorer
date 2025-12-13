@@ -1,5 +1,4 @@
 # Orbit-Explorer
-docker compose up --build db backend frontend
 
 ## Project Description
 **Orbit Explorer** is a full stack web application that allows users to explore astronomical events such as occultations, eclipses, transits, and celestial alignments based on a selected time window and observer location.
@@ -88,7 +87,7 @@ Event Type: OCCULTATION
 -Cloud hosting on AWS
 
 ## Contributors
-Victoria: Frontend UI, Occultation Search, 3D Visualizations, Calculations Work
+Victoria: Frontend UI, Wrote APIs to Connect Frontend with Backend, Occultation Search, 3D Visualizations, Calculations Work, and build missing database schema for events to work with the 3D visualizations
 
 Jim: Backend, API Routing, helped with calculations: occultations, positioning, assisted Victoria with some frontend functionality, and Authentication 
 
